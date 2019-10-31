@@ -1,0 +1,10 @@
+static lowest: usize = 1;
+static equals: usize = 2;
+static logical: usize = 3;
+static less_greater: usize = 4;
+static sum: usize = 5;
+static product: usize = 6;
+static modulo: usize = 7;
+static prefix: usize = 8;
+static call: usize = 9;
+static index: usize = 10;
