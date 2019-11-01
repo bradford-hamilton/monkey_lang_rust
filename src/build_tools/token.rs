@@ -1,55 +1,55 @@
 use std::collections::HashMap;
 
-static ILLEGAL: &str = "ILLEGAL";
-static EOF: &str = "EOF";
+pub static ILLEGAL: &str = "ILLEGAL";
+pub static EOF: &str = "EOF";
 
-static IDENTIFIER: &str = "IDENTIFIER";
-static INTEGER: &str = "INTEGER";
-static STRING: &str = "STRING";
+pub static IDENTIFIER: &str = "IDENTIFIER";
+pub static INTEGER: &str = "INTEGER";
+pub static STRING: &str = "STRING";
 
-static EQUAL: &str = "=";
-static PLUS: &str = "+";
-static PLUS_PLUS: &str = "++";
-static MINUS: &str = "-";
-static MINUS_MINUS: &str = "--";
-static STAR: &str = "*";
-static SLASH: &str = "/";
-static MOD: &str = "%";
-static BANG: &str = "!";
-static EQUAL_EQUAL: &str = "==";
-static LESS: &str = "<";
-static LESS_EQUAL: &str = "<=";
-static GREATER: &str = ">";
-static GREATER_EQUAL: &str = ">=";
-static BANG_EQUAL: &str = "!=";
-static AND: &str = "&&";
-static OR: &str = "||";
+pub static EQUAL: &str = "=";
+pub static PLUS: &str = "+";
+pub static PLUS_PLUS: &str = "++";
+pub static MINUS: &str = "-";
+pub static MINUS_MINUS: &str = "--";
+pub static STAR: &str = "*";
+pub static SLASH: &str = "/";
+pub static MOD: &str = "%";
+pub static BANG: &str = "!";
+pub static EQUAL_EQUAL: &str = "==";
+pub static LESS: &str = "<";
+pub static LESS_EQUAL: &str = "<=";
+pub static GREATER: &str = ">";
+pub static GREATER_EQUAL: &str = ">=";
+pub static BANG_EQUAL: &str = "!=";
+pub static AND: &str = "&&";
+pub static OR: &str = "||";
 
-static COMMA: &str = ",";
-static COLON: &str = ":";
-static SEMICOLON: &str = ";";
-static LEFT_PAREN: &str = "(";
-static RIGHT_PAREN: &str = ")";
-static LEFT_BRACE: &str = "{";
-static RIGHT_BRACE: &str = "}";
-static LEFT_BRACKET: &str = "[";
-static RIGHT_BRACKET: &str = "]";
+pub static COMMA: &str = ",";
+pub static COLON: &str = ":";
+pub static SEMICOLON: &str = ";";
+pub static LEFT_PAREN: &str = "(";
+pub static RIGHT_PAREN: &str = ")";
+pub static LEFT_BRACE: &str = "{";
+pub static RIGHT_BRACE: &str = "}";
+pub static LEFT_BRACKET: &str = "[";
+pub static RIGHT_BRACKET: &str = "]";
 
-static FUNCTION: &str = "FUNCTION";
-static LET: &str = "LET";
-static CONST: &str = "CONST";
-static TRUE: &str = "TRUE";
-static FALSE: &str = "FALSE";
-static IF: &str = "IF";
-static ELSE: &str = "ELSE";
-static RETURN: &str = "RETURN";
+pub static FUNCTION: &str = "FUNCTION";
+pub static LET: &str = "LET";
+pub static CONST: &str = "CONST";
+pub static TRUE: &str = "TRUE";
+pub static FALSE: &str = "FALSE";
+pub static IF: &str = "IF";
+pub static ELSE: &str = "ELSE";
+pub static RETURN: &str = "RETURN";
 
-type TokenType = String;
+pub type TokenType = String;
 
-struct Token {
-    token_type: TokenType,
-    literal: String,
-    line: usize,
+pub struct Token {
+    pub token_type: TokenType,
+    pub literal: String,
+    pub line: usize,
 }
 
 struct Keywords;
@@ -69,4 +69,12 @@ impl Keywords {
 
         keywords
     }
+}
+
+pub fn look_up_identifier(identifier: String) -> TokenType {
+    if Keywords::all().contains_key(&identifier) {
+        return Keywords::all()[&identifier].to_string();
+    }
+
+    return IDENTIFIER.to_string();
 }
