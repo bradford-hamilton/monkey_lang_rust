@@ -10,7 +10,7 @@ pub struct Lexer {
 
 impl Lexer {
     pub fn new(input: String) -> Lexer {
-        let mut l = Lexer {
+        let mut lexer = Lexer {
             input: input.chars().collect(),
             current_char: 'a',
             position: 0,
@@ -18,9 +18,8 @@ impl Lexer {
             line: 0,
         };
 
-        l.read_char();
-
-        l
+        lexer.read_char();
+        lexer
     }
 
     fn read_char(&mut self) {
