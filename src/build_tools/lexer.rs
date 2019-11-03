@@ -1,4 +1,6 @@
-use crate::build_tools::token::{Token, TokenType, EQUAL, EQUAL_EQUAL, INTEGER, ILLEGAL, look_up_identifier};
+use crate::build_tools::token::{
+    look_up_identifier, Token, TokenType, EQUAL, EQUAL_EQUAL, ILLEGAL, INTEGER,
+};
 
 pub struct Lexer {
     input: Vec<char>,
@@ -121,7 +123,7 @@ impl Lexer {
         return self.input[self.read_position];
     }
 
-    fn next_token(&mut self) -> Token {
+    fn next_token(mut self) -> Token {
         let mut t = Token {
             token_type: String::from(""),
             literal: String::from(""),
@@ -143,9 +145,9 @@ impl Lexer {
                         token_type: EQUAL_EQUAL.to_string(),
                         literal,
                         line: self.line,
-                    }
+                    };
                 } else {
-                    t = new_token(EQUAL.to_string(), self.line, self.current_char);
+                    t = new_token(EQUAL.to_string(), self.line, self.current_char.to_string());
                 }
             }
             // case '+':
@@ -256,29 +258,32 @@ impl Lexer {
             _ => {
                 if is_letter(self.current_char) {
                     t.literal = self.read_identifier();
-                    t.token_type = look_up_identifier(t.literal);
+                    t.token_type = look_up_identifier(&t.literal);
                     t.line = self.line;
                 } else if is_integer(self.current_char) {
                     t.literal = self.read_integer();
                     t.token_type = INTEGER.to_string();
                     t.line = self.line;
                 } else {
-                    t = new_token(ILLEGAL.to_string(), self.line, self.current_char)
+                    t = new_token(
+                        ILLEGAL.to_string(),
+                        self.line,
+                        self.current_char.to_string(),
+                    )
                 }
             }
         }
 
         self.read_char();
 
-        // TODO: figure out moved variable "t"
-        return t;
+        t
     }
 }
 
-fn new_token(token_type: TokenType, line: usize, literal: char) -> Token {
+fn new_token(token_type: TokenType, line: usize, literal: String) -> Token {
     Token {
         token_type,
-        literal: literal.to_string(),
+        literal,
         line,
     }
 }

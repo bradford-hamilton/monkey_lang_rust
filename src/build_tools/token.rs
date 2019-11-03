@@ -71,9 +71,9 @@ impl Keywords {
     }
 }
 
-pub fn look_up_identifier(identifier: String) -> TokenType {
-    if Keywords::all().contains_key(&identifier) {
-        return Keywords::all()[&identifier].to_string();
+pub fn look_up_identifier(identifier: &String) -> TokenType {
+    if Keywords::all().contains_key(identifier) {
+        return Keywords::all()[identifier].to_string();
     }
 
     return IDENTIFIER.to_string();
