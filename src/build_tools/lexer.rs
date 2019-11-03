@@ -1,5 +1,8 @@
 use crate::build_tools::token::{
-    look_up_identifier, Token, TokenType, EQUAL, EQUAL_EQUAL, ILLEGAL, INTEGER,
+    look_up_identifier, Token, TokenType, AND, BANG, BANG_EQUAL, COLON, COMMA, EOF, EQUAL,
+    EQUAL_EQUAL, GREATER, GREATER_EQUAL, ILLEGAL, INTEGER, LEFT_BRACE, LEFT_BRACKET, LEFT_PAREN,
+    LESS, LESS_EQUAL, MINUS, MINUS_MINUS, MOD, OR, PLUS, PLUS_PLUS, RIGHT_BRACE, RIGHT_BRACKET,
+    RIGHT_PAREN, SEMICOLON, SLASH, STAR, STRING,
 };
 
 pub struct Lexer {
@@ -96,7 +99,7 @@ impl Lexer {
         self.skip_whitespace();
     }
 
-    fn skip_multiline_comment(&mut self) {
+    fn skip_multi_line_comment(&mut self) {
         let mut end_found = false;
 
         while !end_found {
@@ -124,7 +127,7 @@ impl Lexer {
     }
 
     fn next_token(mut self) -> Token {
-        let mut t = Token {
+        let mut token = Token {
             token_type: String::from(""),
             literal: String::from(""),
             line: 0,
@@ -139,133 +142,207 @@ impl Lexer {
 
                     self.read_char();
 
-                    let literal = ch.to_string() + &self.current_char.to_string();
-
-                    t = Token {
+                    token = Token {
                         token_type: EQUAL_EQUAL.to_string(),
-                        literal,
+                        literal: ch.to_string() + &self.current_char.to_string(),
                         line: self.line,
                     };
                 } else {
-                    t = new_token(EQUAL.to_string(), self.line, self.current_char.to_string());
+                    token = new_token(EQUAL.to_string(), self.line, self.current_char.to_string());
                 }
             }
-            // case '+':
-            //     if l.peek() == '+' {
-            //         ch := l.char
-            //         l.readChar()
-            //         t = token.Token{
-            //             Type:    token.PlusPlus,
-            //             Literal: string(ch) + string(l.char),
-            //             Line:    l.line,
-            //         }
-            //     } else {
-            //         t = newToken(token.Plus, l.line, l.char)
-            //     }
-            // case '-':
-            //     if l.peek() == '-' {
-            //         ch := l.char
-            //         l.readChar()
-            //         t = token.Token{
-            //             Type:    token.MinusMinus,
-            //             Literal: string(ch) + string(l.char),
-            //             Line:    l.line,
-            //         }
-            //     } else {
-            //         t = newToken(token.Minus, l.line, l.char)
-            //     }
-            // case '!':
-            //     if l.peek() == '=' {
-            //         ch := l.char
-            //         l.readChar()
-            //         literal := string(ch) + string(l.char)
-            //         t = token.Token{
-            //             Type:    token.BangEqual,
-            //             Literal: literal,
-            //             Line:    l.line,
-            //         }
-            //     } else {
-            //         t = newToken(token.Bang, l.line, l.char)
-            //     }
-            // case '*':
-            //     t = newToken(token.Star, l.line, l.char)
-            // case '/':
-            //     if l.peek() == '/' {
-            //         l.skipSingleLineComment()
-            //         return l.NextToken()
-            //     }
-            //     if l.peek() == '*' {
-            //         l.skipMultiLineComment()
-            //         return l.NextToken()
-            //     }
-            //     t = newToken(token.Slash, l.line, l.char)
-            // case '%':
-            //     t = newToken(token.Mod, l.line, l.char)
-            // case '<':
-            //     if l.peek() == '=' {
-            //         ch := l.char
-            //         l.readChar()
-            //         t = newToken(token.LessEqual, l.line, ch, l.char)
-            //     } else {
-            //         t = newToken(token.Less, l.line, l.char)
-            //     }
-            // case '>':
-            //     if l.peek() == '=' {
-            //         ch := l.char
-            //         l.readChar()
-            //         t = newToken(token.GreaterEqual, l.line, ch, l.char)
-            //     } else {
-            //         t = newToken(token.Greater, l.line, l.char)
-            //     }
-            // case '&':
-            //     if l.peek() == '&' {
-            //         ch := l.char
-            //         l.readChar()
-            //         t = newToken(token.And, l.line, ch, l.char)
-            //     }
-            // case '|':
-            //     if l.peek() == '|' {
-            //         ch := l.char
-            //         l.readChar()
-            //         t = newToken(token.Or, l.line, ch, l.char)
-            //     }
-            // case ',':
-            //     t = newToken(token.Comma, l.line, l.char)
-            // case ':':
-            //     t = newToken(token.Colon, l.line, l.char)
-            // case ';':
-            //     t = newToken(token.Semicolon, l.line, l.char)
-            // case '(':
-            //     t = newToken(token.LeftParen, l.line, l.char)
-            // case ')':
-            //     t = newToken(token.RightParen, l.line, l.char)
-            // case '{':
-            //     t = newToken(token.LeftBrace, l.line, l.char)
-            // case '}':
-            //     t = newToken(token.RightBrace, l.line, l.char)
-            // case '[':
-            //     t = newToken(token.LeftBracket, l.line, l.char)
-            // case ']':
-            //     t = newToken(token.RightBracket, l.line, l.char)
-            // case '"':
-            //     t.Type = token.String
-            //     t.Literal = l.readString()
-            //     t.Line = l.line
-            // case 0:
-            //     t.Literal = ""
-            //     t.Type = token.EOF
-            //     t.Line = l.line
+            '+' => {
+                if self.peek() == '+' {
+                    let ch = self.current_char;
+
+                    self.read_char();
+
+                    token = Token {
+                        token_type: PLUS_PLUS.to_string(),
+                        literal: ch.to_string() + &self.current_char.to_string(),
+                        line: self.line,
+                    }
+                } else {
+                    token = new_token(PLUS.to_string(), self.line, self.current_char.to_string());
+                }
+            }
+            '-' => {
+                if self.peek() == '-' {
+                    let ch = self.current_char;
+
+                    self.read_char();
+
+                    token = Token {
+                        token_type: MINUS_MINUS.to_string(),
+                        literal: ch.to_string() + &self.current_char.to_string(),
+                        line: self.line,
+                    }
+                } else {
+                    token = new_token(MINUS.to_string(), self.line, self.current_char.to_string())
+                }
+            }
+            '!' => {
+                if self.peek() == '=' {
+                    let ch = self.current_char;
+
+                    self.read_char();
+
+                    token = Token {
+                        token_type: BANG_EQUAL.to_string(),
+                        literal: ch.to_string() + &self.current_char.to_string(),
+                        line: self.line,
+                    }
+                } else {
+                    token = new_token(BANG.to_string(), self.line, self.current_char.to_string());
+                }
+            }
+            '*' => {
+                token = new_token(STAR.to_string(), self.line, self.current_char.to_string());
+            }
+            '/' => {
+                if self.peek() == '/' {
+                    self.skip_single_line_comment();
+                    return self.next_token();
+                }
+
+                if self.peek() == '*' {
+                    self.skip_multi_line_comment();
+                    return self.next_token();
+                }
+
+                token = new_token(SLASH.to_string(), self.line, self.current_char.to_string());
+            }
+            '%' => {
+                token = new_token(MOD.to_string(), self.line, self.current_char.to_string());
+            }
+            '<' => {
+                if self.peek() == '=' {
+                    let ch = self.current_char;
+
+                    self.read_char();
+
+                    let literal = ch.to_string() + &self.current_char.to_string();
+
+                    token = new_token(LESS_EQUAL.to_string(), self.line, literal);
+                } else {
+                    token = new_token(LESS.to_string(), self.line, self.current_char.to_string());
+                }
+            }
+            '>' => {
+                if self.peek() == '=' {
+                    let ch = self.current_char;
+
+                    self.read_char();
+
+                    let literal = ch.to_string() + &self.current_char.to_string();
+
+                    token = new_token(GREATER_EQUAL.to_string(), self.line, literal);
+                } else {
+                    token = new_token(
+                        GREATER.to_string(),
+                        self.line,
+                        self.current_char.to_string(),
+                    );
+                }
+            }
+            '&' => {
+                if self.peek() == '&' {
+                    let ch = self.current_char;
+
+                    self.read_char();
+
+                    let literal = ch.to_string() + &self.current_char.to_string();
+
+                    token = new_token(AND.to_string(), self.line, literal);
+                }
+            }
+            '|' => {
+                if self.peek() == '|' {
+                    let ch = self.current_char;
+
+                    self.read_char();
+
+                    let literal = ch.to_string() + &self.current_char.to_string();
+
+                    token = new_token(OR.to_string(), self.line, literal);
+                }
+            }
+            ',' => {
+                token = new_token(COMMA.to_string(), self.line, self.current_char.to_string());
+            }
+            ':' => {
+                token = new_token(COLON.to_string(), self.line, self.current_char.to_string());
+            }
+            ';' => {
+                token = new_token(
+                    SEMICOLON.to_string(),
+                    self.line,
+                    self.current_char.to_string(),
+                );
+            }
+            '(' => {
+                token = new_token(
+                    LEFT_PAREN.to_string(),
+                    self.line,
+                    self.current_char.to_string(),
+                );
+            }
+            ')' => {
+                token = new_token(
+                    RIGHT_PAREN.to_string(),
+                    self.line,
+                    self.current_char.to_string(),
+                );
+            }
+            '{' => {
+                token = new_token(
+                    LEFT_BRACE.to_string(),
+                    self.line,
+                    self.current_char.to_string(),
+                );
+            }
+            '}' => {
+                token = new_token(
+                    RIGHT_BRACE.to_string(),
+                    self.line,
+                    self.current_char.to_string(),
+                );
+            }
+            '[' => {
+                token = new_token(
+                    LEFT_BRACKET.to_string(),
+                    self.line,
+                    self.current_char.to_string(),
+                );
+            }
+            ']' => {
+                token = new_token(
+                    RIGHT_BRACKET.to_string(),
+                    self.line,
+                    self.current_char.to_string(),
+                );
+            }
+            '"' => {
+                token.token_type = STRING.to_string();
+                token.literal = self.read_string();
+                token.line = self.line;
+            }
+            '\0' => {
+                token.literal = String::from("");
+                token.token_type = EOF.to_string();
+                token.line = self.line;
+            }
             _ => {
                 if is_letter(self.current_char) {
-                    t.literal = self.read_identifier();
-                    t.token_type = look_up_identifier(&t.literal);
-                    t.line = self.line;
+                    token.literal = self.read_identifier();
+                    token.token_type = look_up_identifier(&token.literal);
+                    token.line = self.line;
                 } else if is_integer(self.current_char) {
-                    t.literal = self.read_integer();
-                    t.token_type = INTEGER.to_string();
-                    t.line = self.line;
+                    token.literal = self.read_integer();
+                    token.token_type = INTEGER.to_string();
+                    token.line = self.line;
                 } else {
-                    t = new_token(
+                    token = new_token(
                         ILLEGAL.to_string(),
                         self.line,
                         self.current_char.to_string(),
@@ -276,7 +353,7 @@ impl Lexer {
 
         self.read_char();
 
-        t
+        token
     }
 }
 
