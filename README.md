@@ -1,5 +1,3 @@
 ## Monkey Lang in Rust
 
-Rewrite of https://github.com/bradford-hamilton/monkey-lang in rust.
-
-For the learns.
+Currently rewriting [monkey-lang](https://github.com/bradford-hamilton/monkey-lang) in Rust, which was initially designed in [_Writing An Interpreter In Go_](https://interpreterbook.com/) and [_Writing a Compiler in Go_](https://compilerbook.com).
