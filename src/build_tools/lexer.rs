@@ -1,9 +1,4 @@
-use crate::build_tools::token::{
-    look_up_identifier, Token, TokenType, AND, BANG, BANG_EQUAL, COLON, COMMA, EOF, EQUAL,
-    EQUAL_EQUAL, GREATER, GREATER_EQUAL, ILLEGAL, INTEGER, LEFT_BRACE, LEFT_BRACKET, LEFT_PAREN,
-    LESS, LESS_EQUAL, MINUS, MINUS_MINUS, MOD, OR, PLUS, PLUS_PLUS, RIGHT_BRACE, RIGHT_BRACKET,
-    RIGHT_PAREN, SEMICOLON, SLASH, STAR, STRING,
-};
+use crate::build_tools::token::*;
 
 pub struct Lexer {
     input: Vec<char>,

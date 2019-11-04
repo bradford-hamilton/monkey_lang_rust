@@ -58,14 +58,14 @@ impl Keywords {
     pub fn all() -> HashMap<String, TokenType> {
         let mut keywords: HashMap<String, TokenType> = HashMap::new();
 
-        keywords.insert(String::from("func"), FUNCTION.to_string() as TokenType);
-        keywords.insert(String::from("let"), LET.to_string() as TokenType);
-        keywords.insert(String::from("const"), CONST.to_string() as TokenType);
-        keywords.insert(String::from("true"), TRUE.to_string() as TokenType);
-        keywords.insert(String::from("false"), FALSE.to_string() as TokenType);
-        keywords.insert(String::from("if"), IF.to_string() as TokenType);
-        keywords.insert(String::from("else"), ELSE.to_string() as TokenType);
-        keywords.insert(String::from("return"), RETURN.to_string() as TokenType);
+        keywords.insert(String::from("func"), FUNCTION.to_string());
+        keywords.insert(String::from("let"), LET.to_string());
+        keywords.insert(String::from("const"), CONST.to_string());
+        keywords.insert(String::from("true"), TRUE.to_string());
+        keywords.insert(String::from("false"), FALSE.to_string());
+        keywords.insert(String::from("if"), IF.to_string());
+        keywords.insert(String::from("else"), ELSE.to_string());
+        keywords.insert(String::from("return"), RETURN.to_string());
 
         keywords
     }
