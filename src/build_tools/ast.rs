@@ -1,3 +1,5 @@
+use crate::build_tools::token::*;
+
 trait Node {
     fn token_literal(&self) -> String;
     fn string(&self) -> String;
@@ -37,4 +39,21 @@ impl RootNode {
 
         statements_string
     }
+}
+
+pub struct Identifier {
+	token: Token,
+	value: String,
+}
+
+impl Expression for Identifier {
+    fn token_literal(&self) -> String {
+        self.token.literal
+    }
+
+    fn string(&self) -> String {
+        self.value
+    }
+
+    fn expression_node(&self) {}
 }

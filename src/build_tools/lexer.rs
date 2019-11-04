@@ -121,7 +121,7 @@ impl Lexer {
         return self.input[self.read_position];
     }
 
-    fn next_token(mut self) -> Token {
+    pub fn next_token(mut self) -> Token {
         let mut token = Token {
             token_type: String::from(""),
             literal: String::from(""),
