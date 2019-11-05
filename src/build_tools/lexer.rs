@@ -123,7 +123,7 @@ impl Lexer {
 
     pub fn next_token(mut self) -> Token {
         let mut token = Token {
-            token_type: String::from(""),
+            token_type: TokenType::NONE,
             literal: String::from(""),
             line: 0,
         };
@@ -138,12 +138,12 @@ impl Lexer {
                     self.read_char();
 
                     token = Token {
-                        token_type: EQUAL_EQUAL.to_string(),
+                        token_type: TokenType::EQUAL_EQUAL,
                         literal: ch.to_string() + &self.current_char.to_string(),
                         line: self.line,
                     };
                 } else {
-                    token = new_token(EQUAL.to_string(), self.line, self.current_char.to_string());
+                    token = new_token(TokenType::EQUAL, self.line, self.current_char.to_string());
                 }
             }
             '+' => {
@@ -153,12 +153,12 @@ impl Lexer {
                     self.read_char();
 
                     token = Token {
-                        token_type: PLUS_PLUS.to_string(),
+                        token_type: TokenType::PLUS_PLUS,
                         literal: ch.to_string() + &self.current_char.to_string(),
                         line: self.line,
                     }
                 } else {
-                    token = new_token(PLUS.to_string(), self.line, self.current_char.to_string());
+                    token = new_token(TokenType::PLUS, self.line, self.current_char.to_string());
                 }
             }
             '-' => {
@@ -168,12 +168,12 @@ impl Lexer {
                     self.read_char();
 
                     token = Token {
-                        token_type: MINUS_MINUS.to_string(),
+                        token_type: TokenType::MINUS_MINUS,
                         literal: ch.to_string() + &self.current_char.to_string(),
                         line: self.line,
                     }
                 } else {
-                    token = new_token(MINUS.to_string(), self.line, self.current_char.to_string())
+                    token = new_token(TokenType::MINUS, self.line, self.current_char.to_string())
                 }
             }
             '!' => {
@@ -183,16 +183,16 @@ impl Lexer {
                     self.read_char();
 
                     token = Token {
-                        token_type: BANG_EQUAL.to_string(),
+                        token_type: TokenType::BANG_EQUAL,
                         literal: ch.to_string() + &self.current_char.to_string(),
                         line: self.line,
                     }
                 } else {
-                    token = new_token(BANG.to_string(), self.line, self.current_char.to_string());
+                    token = new_token(TokenType::BANG, self.line, self.current_char.to_string());
                 }
             }
             '*' => {
-                token = new_token(STAR.to_string(), self.line, self.current_char.to_string());
+                token = new_token(TokenType::STAR, self.line, self.current_char.to_string());
             }
             '/' => {
                 if self.peek() == '/' {
@@ -205,10 +205,10 @@ impl Lexer {
                     return self.next_token();
                 }
 
-                token = new_token(SLASH.to_string(), self.line, self.current_char.to_string());
+                token = new_token(TokenType::SLASH, self.line, self.current_char.to_string());
             }
             '%' => {
-                token = new_token(MOD.to_string(), self.line, self.current_char.to_string());
+                token = new_token(TokenType::MOD, self.line, self.current_char.to_string());
             }
             '<' => {
                 if self.peek() == '=' {
@@ -218,9 +218,9 @@ impl Lexer {
 
                     let literal = ch.to_string() + &self.current_char.to_string();
 
-                    token = new_token(LESS_EQUAL.to_string(), self.line, literal);
+                    token = new_token(TokenType::LESS_EQUAL, self.line, literal);
                 } else {
-                    token = new_token(LESS.to_string(), self.line, self.current_char.to_string());
+                    token = new_token(TokenType::LESS, self.line, self.current_char.to_string());
                 }
             }
             '>' => {
@@ -231,10 +231,10 @@ impl Lexer {
 
                     let literal = ch.to_string() + &self.current_char.to_string();
 
-                    token = new_token(GREATER_EQUAL.to_string(), self.line, literal);
+                    token = new_token(TokenType::GREATER_EQUAL, self.line, literal);
                 } else {
                     token = new_token(
-                        GREATER.to_string(),
+                        TokenType::GREATER,
                         self.line,
                         self.current_char.to_string(),
                     );
@@ -248,7 +248,7 @@ impl Lexer {
 
                     let literal = ch.to_string() + &self.current_char.to_string();
 
-                    token = new_token(AND.to_string(), self.line, literal);
+                    token = new_token(TokenType::AND, self.line, literal);
                 }
             }
             '|' => {
@@ -259,72 +259,72 @@ impl Lexer {
 
                     let literal = ch.to_string() + &self.current_char.to_string();
 
-                    token = new_token(OR.to_string(), self.line, literal);
+                    token = new_token(TokenType::OR, self.line, literal);
                 }
             }
             ',' => {
-                token = new_token(COMMA.to_string(), self.line, self.current_char.to_string());
+                token = new_token(TokenType::COMMA, self.line, self.current_char.to_string());
             }
             ':' => {
-                token = new_token(COLON.to_string(), self.line, self.current_char.to_string());
+                token = new_token(TokenType::COLON, self.line, self.current_char.to_string());
             }
             ';' => {
                 token = new_token(
-                    SEMICOLON.to_string(),
+                    TokenType::SEMICOLON,
                     self.line,
                     self.current_char.to_string(),
                 );
             }
             '(' => {
                 token = new_token(
-                    LEFT_PAREN.to_string(),
+                    TokenType::LEFT_PAREN,
                     self.line,
                     self.current_char.to_string(),
                 );
             }
             ')' => {
                 token = new_token(
-                    RIGHT_PAREN.to_string(),
+                    TokenType::RIGHT_PAREN,
                     self.line,
                     self.current_char.to_string(),
                 );
             }
             '{' => {
                 token = new_token(
-                    LEFT_BRACE.to_string(),
+                    TokenType::LEFT_BRACE,
                     self.line,
                     self.current_char.to_string(),
                 );
             }
             '}' => {
                 token = new_token(
-                    RIGHT_BRACE.to_string(),
+                    TokenType::RIGHT_BRACE,
                     self.line,
                     self.current_char.to_string(),
                 );
             }
             '[' => {
                 token = new_token(
-                    LEFT_BRACKET.to_string(),
+                    TokenType::LEFT_BRACKET,
                     self.line,
                     self.current_char.to_string(),
                 );
             }
             ']' => {
                 token = new_token(
-                    RIGHT_BRACKET.to_string(),
+                    TokenType::RIGHT_BRACKET,
                     self.line,
                     self.current_char.to_string(),
                 );
             }
             '"' => {
-                token.token_type = STRING.to_string();
+                token.token_type = TokenType::STRING;
                 token.literal = self.read_string();
                 token.line = self.line;
             }
             '\0' => {
                 token.literal = String::from("");
-                token.token_type = EOF.to_string();
+                token.token_type = TokenType::EOF;
                 token.line = self.line;
             }
             _ => {
@@ -334,11 +334,11 @@ impl Lexer {
                     token.line = self.line;
                 } else if is_integer(self.current_char) {
                     token.literal = self.read_integer();
-                    token.token_type = INTEGER.to_string();
+                    token.token_type = TokenType::INTEGER;
                     token.line = self.line;
                 } else {
                     token = new_token(
-                        ILLEGAL.to_string(),
+                        TokenType::ILLEGAL,
                         self.line,
                         self.current_char.to_string(),
                     )

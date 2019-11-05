@@ -21,27 +21,27 @@ impl Precedences {
     pub fn all() -> HashMap<TokenType, usize> {
         let mut precendences: HashMap<TokenType, usize> = HashMap::new();
 
-        precendences.insert(EQUAL_EQUAL.to_string(), EQUALS);
-        precendences.insert(BANG_EQUAL.to_string(), EQUALS);
-        precendences.insert(LESS.to_string(), LESS_GREATER);
-        precendences.insert(GREATER.to_string(), LESS_GREATER);
-        precendences.insert(LESS_EQUAL.to_string(), LESS_GREATER);
-        precendences.insert(LESS_GREATER.to_string(), LESS_GREATER);
-        precendences.insert(PLUS.to_string(), SUM);
-        precendences.insert(MINUS.to_string(), SUM);
-        precendences.insert(SLASH.to_string(), PRODUCT);
-        precendences.insert(STAR.to_string(), PRODUCT);
-        precendences.insert(MOD.to_string(), MODULO);
-        precendences.insert(AND.to_string(), LOGICAL);
-        precendences.insert(OR.to_string(), LOGICAL);
-        precendences.insert(LEFT_PAREN.to_string(), CALL);
-        precendences.insert(LEFT_BRACKET.to_string(), INDEX);
+        precendences.insert(TokenType::EQUAL_EQUAL, EQUALS);
+        precendences.insert(TokenType::BANG_EQUAL, EQUALS);
+        precendences.insert(TokenType::LESS, LESS_GREATER);
+        precendences.insert(TokenType::GREATER, LESS_GREATER);
+        precendences.insert(TokenType::LESS_EQUAL, LESS_GREATER);
+        precendences.insert(TokenType::GREATER_EQUAL, LESS_GREATER);
+        precendences.insert(TokenType::PLUS, SUM);
+        precendences.insert(TokenType::MINUS, SUM);
+        precendences.insert(TokenType::SLASH, PRODUCT);
+        precendences.insert(TokenType::STAR, PRODUCT);
+        precendences.insert(TokenType::MOD, MODULO);
+        precendences.insert(TokenType::AND, LOGICAL);
+        precendences.insert(TokenType::OR, LOGICAL);
+        precendences.insert(TokenType::LEFT_PAREN, CALL);
+        precendences.insert(TokenType::LEFT_BRACKET, INDEX);
 
         precendences
     }
 }
 
-type PrefixParseFunc = fn() -> dyn Expression;
+type PrefixParseFunc = fn() -> Box<dyn Expression>;
 type InfixParseFunc = fn(expr: dyn Expression) -> dyn Expression;
 type PostfixParseFunc = fn() -> Box<dyn Expression>;
 
@@ -59,13 +59,13 @@ struct Parser<'a> {
 }
 
 impl<'a> Parser<'a> {
-    fn new(lexer: &'a Lexer) -> &'a Self {
+    fn new(lexer: &'a Lexer) -> &'a Parser {
         let mut parser = &Parser {
             lexer,
             errors: vec![],
-            current_token: Token { line: 0, literal: String::from(""), token_type: String::from("") },
-            peek_token: Token { line: 0, literal: String::from(""), token_type: String::from("") },
-            prev_token: Token { line: 0, literal: String::from(""), token_type: String::from("") },
+            current_token: Token { line: 0, literal: String::from(""), token_type: TokenType::NONE },
+            peek_token: Token { line: 0, literal: String::from(""), token_type: TokenType::NONE },
+            prev_token: Token { line: 0, literal: String::from(""), token_type: TokenType::NONE },
             prefix_parse_funcs: HashMap::new(),
             infix_parse_funcs: HashMap::new(),
             postfix_parse_funcs: HashMap::new(),
@@ -73,7 +73,7 @@ impl<'a> Parser<'a> {
 
         parser.prefix_parse_funcs = HashMap::new();
 
-        parser.register_prefix(IDENTIFIER.to_string(), parser.parse_identifier);
+        parser.register_prefix(TokenType::IDENTIFIER, parser.parse_identifier());
         // parser.register_prefix(INTEGER, parser.parse_integer_literal);
         // parser.register_prefix(BANG, parser.parse_prefix_expression);
         // parser.register_prefix(MINUS, parser.parse_prefix_expression);
@@ -93,7 +93,7 @@ impl<'a> Parser<'a> {
         self.prefix_parse_funcs[&token_type] = func;
     }
 
-    fn parse_identifier(&self) -> Box<dyn Expression> {
+    fn parse_identifier(&self) -> impl Fn() -> Box<dyn Expression> {
         let contains_key = self.postfix_parse_funcs.contains_key(&self.peek_token.token_type);
         
         if contains_key {
@@ -101,10 +101,10 @@ impl<'a> Parser<'a> {
 
             self.next_token();
 
-            return postfix();
+            return || postfix();
         }
         
-        Box::new(Identifier {
+        return || Box::new(Identifier {
             token: self.current_token,
             value: self.current_token.literal,
         })
