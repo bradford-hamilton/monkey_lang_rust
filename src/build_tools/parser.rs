@@ -41,8 +41,8 @@ impl Precedences {
     }
 }
 
-type PrefixParseFunc = fn() -> Box<dyn Expression>;
-type InfixParseFunc = fn(expr: dyn Expression) -> dyn Expression;
+type PrefixParseFunc = for<'r, 's> fn(&'r Parser<'s>) -> Box<(dyn Expression + 'static)>;
+type InfixParseFunc = fn(expr: dyn Expression) -> Box<dyn Expression>;
 type PostfixParseFunc = fn() -> Box<dyn Expression>;
 
 struct Parser<'a> {
@@ -73,7 +73,9 @@ impl<'a> Parser<'a> {
 
         parser.prefix_parse_funcs = HashMap::new();
 
-        parser.register_prefix(TokenType::IDENTIFIER, parser.parse_identifier());
+        // parser.prefix_parse_funcs[&TokenType::IDENTIFIER] = pi(&parser);
+
+        parser.register_prefix(TokenType::IDENTIFIER, pi(parser));
         // parser.register_prefix(INTEGER, parser.parse_integer_literal);
         // parser.register_prefix(BANG, parser.parse_prefix_expression);
         // parser.register_prefix(MINUS, parser.parse_prefix_expression);
@@ -89,25 +91,14 @@ impl<'a> Parser<'a> {
         parser
     }
 
+    // fn register_prefix<F>(&mut self, token_type: TokenType, func: F)
+    //     where F: Fn(&mut Parser)
+    // {
+    //     func(&mut self);
+    // }
+
     fn register_prefix(&mut self, token_type: TokenType, func: PrefixParseFunc) {
         self.prefix_parse_funcs[&token_type] = func;
-    }
-
-    fn parse_identifier(&self) -> impl Fn() -> Box<dyn Expression> {
-        let contains_key = self.postfix_parse_funcs.contains_key(&self.peek_token.token_type);
-        
-        if contains_key {
-            let postfix = self.postfix_parse_funcs[&self.peek_token.token_type];
-
-            self.next_token();
-
-            return || postfix();
-        }
-        
-        return || Box::new(Identifier {
-            token: self.current_token,
-            value: self.current_token.literal,
-        })
     }
 
     fn next_token(&mut self) {
@@ -116,3 +107,23 @@ impl<'a> Parser<'a> {
         self.peek_token = self.lexer.next_token();
     }
 }
+
+fn pi(parser: &mut Parser) -> fn(parser: &Parser) -> Box<dyn Expression> {
+    return move |parser: &Parser| -> Box<dyn Expression> {
+        let contains_key = parser.postfix_parse_funcs.contains_key(&parser.peek_token.token_type);
+        
+        if contains_key {
+            let postfix = parser.postfix_parse_funcs[&parser.peek_token.token_type];
+
+            parser.next_token();
+
+            return postfix();
+        }
+        
+        return Box::new(Identifier {
+            token: parser.current_token,
+            value: parser.current_token.literal,
+        });
+    }
+}
+    
