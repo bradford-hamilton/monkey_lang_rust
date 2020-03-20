@@ -79,6 +79,5 @@ pub fn look_up_identifier(identifier: &String) -> TokenType {
     if Keywords::all().contains_key(identifier) {
         return Keywords::all()[identifier];
     }
-
-    return TokenType::IDENTIFIER;
+    TokenType::IDENTIFIER
 }

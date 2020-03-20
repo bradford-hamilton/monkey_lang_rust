@@ -1,4 +1,4 @@
-use crate::build_tools::ast::{Expression, Identifier, IntegerLiteral};
+use crate::build_tools::ast::{Expression, Identifier, IntegerLiteral, PrefixExpression};
 use crate::build_tools::lexer::Lexer;
 use crate::build_tools::token::*;
 
@@ -85,7 +85,7 @@ impl Parser {
 
         parser.register_prefix(TokenType::IDENTIFIER, parse_identifier);
         parser.register_prefix(TokenType::INTEGER, parse_integer_literal);
-        // parser.register_prefix(BANG, parser.parse_prefix_expression);
+        parser.register_prefix(TokenType::BANG, parse_prefix_expression);
         // parser.register_prefix(MINUS, parser.parse_prefix_expression);
         // parser.register_prefix(TRUE, parser.parse_boolean);
         // parser.register_prefix(FALSE, parser.parse_boolean);
@@ -108,6 +108,37 @@ impl Parser {
         self.current_token = self.peek_token.clone();
         self.peek_token = self.lexer.clone().next_token();
     }
+
+    fn parse_expression(&self, precedence: usize) -> Option<Box<dyn Expression>> {
+        let left_expr = match self.prefix_parse_funcs.get(&self.current_token.token_type) {
+            Some(&func) => &func,
+            _ => {
+                self.no_prefix_parse_func_error(self.current_token);
+                return None
+            },
+        };
+
+        // TODO: Finish parse_expression, will need methods: peek_token_type_is, peek_token_precedence, and fixure out correct return types with Options.
+        while !self.peek_token_type_is(TokenType::SEMICOLON) && precedence < self.peek_token_precedence() {
+            let infix = match self.prefix_parse_funcs.get(&self.peek_token.token_type) {
+                Some(&func) => &func,
+                _ => {
+                    return Some(left_expr);
+                },
+            };
+    
+            self.next_token();
+            left_expr = infix(left_expr);
+        }
+    
+        return Some(left_expr);
+    }
+
+    fn no_prefix_parse_func_error(&mut self, token: Token) {
+        let msg = format!("Line {}: No prefix parse function for {} found", self.current_token.line, token.literal);
+        self.errors.push(msg);
+    }
+    
 }
 
 fn parse_identifier(parser: &mut Parser) -> Box<dyn Expression> {
@@ -132,4 +163,17 @@ fn parse_integer_literal(parser: &mut Parser) -> Box<dyn Expression> {
         token: parser.current_token.clone(),
         value: parser.current_token.literal.parse::<usize>().unwrap(),
     })
+}
+
+fn parse_prefix_expression(parser: &mut Parser) -> Box<dyn Expression> {
+    let expr = PrefixExpression {
+        token: parser.current_token.clone(),
+        operator: parser.current_token.literal.clone(),
+        right: Box::new(),
+    };
+
+    parser.next_token();
+    expr.right = parser.parse_expr(PREFIX);
+
+    Box::new(expr)
 }
