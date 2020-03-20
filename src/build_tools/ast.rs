@@ -127,3 +127,25 @@ impl Expression for PrefixExpression {
 
     fn expression_node(&self) {}
 }
+
+/// Boolean - holds the token and it's value (a boolean)
+pub struct Boolean {
+    /// The prefix token (! or -)
+    pub token: Token,
+    /// String (either "!" or "-")
+    pub value: bool,
+}
+
+impl Expression for Boolean {
+    /// token_literal returns the Boolean's literal and satisfies the Node interface.
+    fn token_literal(&self) -> String {
+        self.token.literal.clone()
+    }
+
+    /// string - returns a string representation of the Boolean and satisfies our Node interface
+    fn string(&self) -> String {
+        self.token.literal.clone()
+    }
+
+    fn expression_node(&self) {}
+}

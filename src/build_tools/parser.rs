@@ -1,5 +1,5 @@
 use crate::build_tools::ast::{
-    Expression, Identifier, IntegerLiteral, PrefixExpression, ZeroValueExpression,
+    Expression, Identifier, IntegerLiteral, PrefixExpression, ZeroValueExpression, Boolean
 };
 use crate::build_tools::lexer::Lexer;
 use crate::build_tools::token::*;
@@ -88,9 +88,9 @@ impl Parser {
         parser.register_prefix(TokenType::IDENTIFIER, parse_identifier);
         parser.register_prefix(TokenType::INTEGER, parse_integer_literal);
         parser.register_prefix(TokenType::BANG, parse_prefix_expression);
-        // parser.register_prefix(MINUS, parser.parse_prefix_expression);
-        // parser.register_prefix(TRUE, parser.parse_boolean);
-        // parser.register_prefix(FALSE, parser.parse_boolean);
+        parser.register_prefix(TokenType::MINUS, parse_prefix_expression);
+        parser.register_prefix(TokenType::TRUE, parse_boolean);
+        parser.register_prefix(TokenType::FALSE, parse_boolean);
         // parser.register_prefix(LEFT_PAREN, parser.parse_grouped_expression);
         // parser.register_prefix(IF, parser.parse_if_expression);
         // parser.register_prefix(FUNCTION, parser.parse_function_literal);
@@ -156,6 +156,10 @@ impl Parser {
         );
         self.errors.push(msg);
     }
+
+    fn current_token_type_is(&self, token_type: TokenType) -> bool {
+        self.current_token.token_type == token_type
+    }
 }
 
 fn parse_identifier(parser: &mut Parser) -> Box<dyn Expression> {
@@ -203,4 +207,11 @@ fn parse_prefix_expression(parser: &mut Parser) -> Box<dyn Expression> {
     };
 
     Box::new(expr)
+}
+
+fn parse_boolean(parser: &mut Parser) -> Box<dyn Expression> {
+    Box::new(Boolean{
+        token: parser.current_token.clone(),
+        value: parser.current_token_type_is(TokenType::TRUE),
+    })
 }
