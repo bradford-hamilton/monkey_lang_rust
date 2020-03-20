@@ -1,4 +1,6 @@
-use crate::build_tools::ast::{Expression, Identifier, IntegerLiteral, PrefixExpression};
+use crate::build_tools::ast::{
+    Expression, Identifier, IntegerLiteral, PrefixExpression, ZeroValueExpression,
+};
 use crate::build_tools::lexer::Lexer;
 use crate::build_tools::token::*;
 
@@ -42,7 +44,7 @@ impl Precedences {
 }
 
 type PrefixParseFunc = fn(parser: &mut Parser) -> Box<dyn Expression>;
-type InfixParseFunc = fn(parser: &mut Parser, expr: dyn Expression) -> Box<dyn Expression>;
+type InfixParseFunc = fn(parser: &mut Parser, expr: Box<dyn Expression>) -> Box<dyn Expression>;
 type PostfixParseFunc = fn(parser: &mut Parser) -> Box<dyn Expression>;
 
 pub struct Parser {
@@ -109,36 +111,51 @@ impl Parser {
         self.peek_token = self.lexer.clone().next_token();
     }
 
-    fn parse_expression(&self, precedence: usize) -> Option<Box<dyn Expression>> {
-        let left_expr = match self.prefix_parse_funcs.get(&self.current_token.token_type) {
-            Some(&func) => &func,
+    fn parse_expr(&mut self, precedence: usize) -> Option<Box<dyn Expression>> {
+        let prefix = match self.prefix_parse_funcs.get(&self.current_token.token_type) {
+            Some(&func) => func,
             _ => {
-                self.no_prefix_parse_func_error(self.current_token);
-                return None
-            },
+                self.no_prefix_parse_func_error(self.current_token.clone());
+                return None;
+            }
         };
 
-        // TODO: Finish parse_expression, will need methods: peek_token_type_is, peek_token_precedence, and fixure out correct return types with Options.
-        while !self.peek_token_type_is(TokenType::SEMICOLON) && precedence < self.peek_token_precedence() {
-            let infix = match self.prefix_parse_funcs.get(&self.peek_token.token_type) {
-                Some(&func) => &func,
+        let mut left_expr = prefix(self);
+
+        while !self.peek_token_type_is(TokenType::SEMICOLON)
+            && precedence < self.peek_token_precedence()
+        {
+            let infix = match self.infix_parse_funcs.get(&self.peek_token.token_type) {
+                Some(&func) => func,
                 _ => {
                     return Some(left_expr);
-                },
+                }
             };
-    
             self.next_token();
-            left_expr = infix(left_expr);
+            left_expr = infix(self, left_expr);
         }
-    
-        return Some(left_expr);
+
+        Some(left_expr)
+    }
+
+    fn peek_token_type_is(&self, token_type: TokenType) -> bool {
+        self.peek_token.token_type == token_type
+    }
+
+    fn peek_token_precedence(&self) -> usize {
+        match Precedences::all().get(&self.peek_token.token_type) {
+            Some(precedence) => return *precedence,
+            _ => return LOWEST,
+        };
     }
 
     fn no_prefix_parse_func_error(&mut self, token: Token) {
-        let msg = format!("Line {}: No prefix parse function for {} found", self.current_token.line, token.literal);
+        let msg = format!(
+            "Line {}: No prefix parse function for {} found",
+            self.current_token.line, token.literal
+        );
         self.errors.push(msg);
     }
-    
 }
 
 fn parse_identifier(parser: &mut Parser) -> Box<dyn Expression> {
@@ -166,14 +183,24 @@ fn parse_integer_literal(parser: &mut Parser) -> Box<dyn Expression> {
 }
 
 fn parse_prefix_expression(parser: &mut Parser) -> Box<dyn Expression> {
-    let expr = PrefixExpression {
+    let mut expr = PrefixExpression {
         token: parser.current_token.clone(),
         operator: parser.current_token.literal.clone(),
-        right: Box::new(),
+        right: Box::new(ZeroValueExpression {}),
     };
 
     parser.next_token();
-    expr.right = parser.parse_expr(PREFIX);
+    expr.right = match parser.parse_expr(PREFIX) {
+        Some(expr) => expr,
+        _ => {
+            let msg = format!(
+                "Line {}: Failed to parse expression {}.",
+                parser.current_token.line, parser.current_token.literal
+            );
+            parser.errors.push(msg);
+            Box::new(ZeroValueExpression {})
+        }
+    };
 
     Box::new(expr)
 }

@@ -46,6 +46,20 @@ impl RootNode {
     }
 }
 
+/// ZeroValueExpression - this is like very poor rust, but I'd like to continue moving forward for now. This
+/// will be useful in a lot of scenarios I'm running into where you cannot initialize a struct with only
+/// some of the fields and so I'm adding this "zero value" expression for when needing to return something
+pub struct ZeroValueExpression {}
+impl Expression for ZeroValueExpression {
+    fn token_literal(&self) -> String {
+        "zero value".to_owned()
+    }
+    fn string(&self) -> String {
+        "zero value".to_owned()
+    }
+    fn expression_node(&self) {}
+}
+
 /// Identifier - holds IDENTIFIER token and it's value (add, foobar, x, y, ...)
 pub struct Identifier {
     pub token: Token,
@@ -90,7 +104,7 @@ impl Expression for IntegerLiteral {
 pub struct PrefixExpression {
     /// The prefix token (! or -)
     pub token: Token,
-     /// String (either "!" or "-")
+    /// String (either "!" or "-")
     pub operator: String,
     /// The expression to the right of the operator
     pub right: Box<dyn Expression>,
@@ -104,7 +118,7 @@ impl Expression for PrefixExpression {
 
     /// String - returns a string representation of the operator followed by it's expression to the right (-5) and satisfies our Node interface
     fn string(&self) -> String {
-        let buf = "(".to_owned();
+        let mut buf = "(".to_owned();
         buf += &self.operator[..];
         buf += &self.right.string();
         buf += ")";
