@@ -1,14 +1,19 @@
 use std::collections::HashMap;
 
+/// Monkey's token types
 #[derive(Debug, PartialEq, Eq, Hash, Copy, Clone)]
 pub enum TokenType {
+    /// Token/character we don't know about
     ILLEGAL,
+    /// End of file
     EOF,
 
-    IDENTIFIER,
+    /// Identifiers & literals
+    IDENTIFIER, // add, foobar, x, y, ...
     INTEGER,
     STRING,
 
+    /// Operators
     EQUAL,
     PLUS,
     PLUS_PLUS,
@@ -27,6 +32,7 @@ pub enum TokenType {
     AND,
     OR,
 
+    /// Delimiters
     COMMA,
     COLON,
     SEMICOLON,
@@ -37,6 +43,7 @@ pub enum TokenType {
     LEFT_BRACKET,
     RIGHT_BRACKET,
 
+    /// Keywords
     FUNCTION,
     LET,
     CONST,
@@ -49,6 +56,7 @@ pub enum TokenType {
     NONE,
 }
 
+/// Token is a struct representing a Monkey token - holds a type and a literal
 #[derive(Clone)]
 pub struct Token {
     pub token_type: TokenType,
@@ -62,19 +70,21 @@ impl Keywords {
     pub fn all() -> HashMap<String, TokenType> {
         let mut keywords: HashMap<String, TokenType> = HashMap::new();
 
-        keywords.insert(String::from("func"), TokenType::FUNCTION);
-        keywords.insert(String::from("let"), TokenType::LET);
-        keywords.insert(String::from("const"), TokenType::CONST);
-        keywords.insert(String::from("true"), TokenType::TRUE);
-        keywords.insert(String::from("false"), TokenType::FALSE);
-        keywords.insert(String::from("if"), TokenType::IF);
-        keywords.insert(String::from("else"), TokenType::ELSE);
-        keywords.insert(String::from("return"), TokenType::RETURN);
+        keywords.insert("func".to_owned(), TokenType::FUNCTION);
+        keywords.insert("let".to_owned(), TokenType::LET);
+        keywords.insert("const".to_owned(), TokenType::CONST);
+        keywords.insert("true".to_owned(), TokenType::TRUE);
+        keywords.insert("false".to_owned(), TokenType::FALSE);
+        keywords.insert("if".to_owned(), TokenType::IF);
+        keywords.insert("else".to_owned(), TokenType::ELSE);
+        keywords.insert("return".to_owned(), TokenType::RETURN);
 
         keywords
     }
 }
 
+/// look_up_identifier checks our keywords map for the scanned keyword. If it finds one, then
+/// the keyword's type is returned. If not, the user defined IDENTIFIER is returned
 pub fn look_up_identifier(identifier: &String) -> TokenType {
     if Keywords::all().contains_key(identifier) {
         return Keywords::all()[identifier];
