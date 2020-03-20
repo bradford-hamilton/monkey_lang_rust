@@ -125,7 +125,7 @@ impl Lexer {
     pub fn next_token(mut self) -> Token {
         let mut token = Token {
             token_type: TokenType::NONE,
-            literal: String::from(""),
+            literal: "".to_owned(),
             line: 0,
         };
 
@@ -320,7 +320,7 @@ impl Lexer {
                 token.line = self.line;
             }
             '\0' => {
-                token.literal = String::from("");
+                token.literal = "".to_owned();
                 token.token_type = TokenType::EOF;
                 token.line = self.line;
             }

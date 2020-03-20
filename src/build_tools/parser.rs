@@ -82,17 +82,17 @@ impl Parser {
             errors: vec![],
             current_token: Token {
                 line: 0,
-                literal: String::from(""),
+                literal: "".to_owned(),
                 token_type: TokenType::NONE,
             },
             peek_token: Token {
                 line: 0,
-                literal: String::from(""),
+                literal: "".to_owned(),
                 token_type: TokenType::NONE,
             },
             prev_token: Token {
                 line: 0,
-                literal: String::from(""),
+                literal: "".to_owned(),
                 token_type: TokenType::NONE,
             },
             prefix_parse_funcs: HashMap::new(),

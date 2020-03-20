@@ -31,12 +31,12 @@ impl RootNode {
         if self.statements.len() > 0 {
             return self.statements[0].token_literal();
         }
-        String::from("")
+        "".to_owned()
     }
 
     /// string returns a buffer containing the programs Statements as strings.
     fn string(&self) -> String {
-        let mut statements_string: String = String::from("");
+        let mut statements_string: String = "".to_owned();
 
         for s in &self.statements {
             statements_string += &s.string();
