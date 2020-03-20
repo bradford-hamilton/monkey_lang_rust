@@ -57,3 +57,20 @@ impl Expression for Identifier {
 
     fn expression_node(&self) {}
 }
+
+pub struct IntegerLiteral {
+    pub token: Token,
+    pub value: usize,
+}
+
+impl Expression for IntegerLiteral {
+    fn token_literal(&self) -> String {
+        self.token.literal.clone()
+    }
+
+    fn string(&self) -> String {
+        self.token.literal.clone()
+    }
+
+    fn expression_node(&self) {}
+}
