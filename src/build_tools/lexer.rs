@@ -1,5 +1,6 @@
 use crate::build_tools::token::*;
 
+#[derive(Clone)]
 pub struct Lexer {
     input: Vec<char>,
     current_char: char,
@@ -233,11 +234,7 @@ impl Lexer {
 
                     token = new_token(TokenType::GREATER_EQUAL, self.line, literal);
                 } else {
-                    token = new_token(
-                        TokenType::GREATER,
-                        self.line,
-                        self.current_char.to_string(),
-                    );
+                    token = new_token(TokenType::GREATER, self.line, self.current_char.to_string());
                 }
             }
             '&' => {
@@ -337,11 +334,7 @@ impl Lexer {
                     token.token_type = TokenType::INTEGER;
                     token.line = self.line;
                 } else {
-                    token = new_token(
-                        TokenType::ILLEGAL,
-                        self.line,
-                        self.current_char.to_string(),
-                    )
+                    token = new_token(TokenType::ILLEGAL, self.line, self.current_char.to_string())
                 }
             }
         }

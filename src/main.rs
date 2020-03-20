@@ -1,4 +1,4 @@
-use monkey_lang_rust::build_tools::{lexer, parser};
+mod build_tools;
 use std::fs;
 
 fn main() {
@@ -8,8 +8,8 @@ fn main() {
         Ok(string) => string,
         Err(error) => panic!("Error opening file {}: {}", filename, error),
     };
-    let lexer = lexer::Lexer::new(input_str);
-    // let parser = Parser::new(lexer);
+    let lexer = build_tools::lexer::Lexer::new(input_str);
+    let parser = build_tools::parser::Parser::new(lexer);
     // let program = parser::parse_program();
     // let result = evaluate_ast(program);
 

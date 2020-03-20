@@ -1,6 +1,6 @@
 use crate::build_tools::ast::{Expression, Identifier};
+use crate::build_tools::lexer::Lexer;
 use crate::build_tools::token::*;
-use crate::build_tools::lexer::{Lexer};
 
 use std::collections::HashMap;
 
@@ -41,12 +41,12 @@ impl Precedences {
     }
 }
 
-type PrefixParseFunc = for<'r, 's> fn(&'r Parser<'s>) -> Box<(dyn Expression + 'static)>;
-type InfixParseFunc = fn(expr: dyn Expression) -> Box<dyn Expression>;
-type PostfixParseFunc = fn() -> Box<dyn Expression>;
+type PrefixParseFunc = fn(parser: &mut Parser) -> Box<dyn Expression>;
+type InfixParseFunc = fn(parser: &mut Parser, expr: dyn Expression) -> Box<dyn Expression>;
+type PostfixParseFunc = fn(parser: &mut Parser) -> Box<dyn Expression>;
 
-struct Parser<'a> {
-    lexer: &'a Lexer,
+pub struct Parser {
+    lexer: Lexer,
     errors: Vec<String>,
 
     current_token: Token,
@@ -58,24 +58,32 @@ struct Parser<'a> {
     postfix_parse_funcs: HashMap<TokenType, PostfixParseFunc>,
 }
 
-impl<'a> Parser<'a> {
-    fn new(lexer: &'a Lexer) -> &'a Parser {
-        let mut parser = &Parser {
+impl Parser {
+    pub fn new(lexer: Lexer) -> Parser {
+        let mut parser = Parser {
             lexer,
             errors: vec![],
-            current_token: Token { line: 0, literal: String::from(""), token_type: TokenType::NONE },
-            peek_token: Token { line: 0, literal: String::from(""), token_type: TokenType::NONE },
-            prev_token: Token { line: 0, literal: String::from(""), token_type: TokenType::NONE },
+            current_token: Token {
+                line: 0,
+                literal: String::from(""),
+                token_type: TokenType::NONE,
+            },
+            peek_token: Token {
+                line: 0,
+                literal: String::from(""),
+                token_type: TokenType::NONE,
+            },
+            prev_token: Token {
+                line: 0,
+                literal: String::from(""),
+                token_type: TokenType::NONE,
+            },
             prefix_parse_funcs: HashMap::new(),
             infix_parse_funcs: HashMap::new(),
             postfix_parse_funcs: HashMap::new(),
         };
 
-        parser.prefix_parse_funcs = HashMap::new();
-
-        // parser.prefix_parse_funcs[&TokenType::IDENTIFIER] = pi(&parser);
-
-        parser.register_prefix(TokenType::IDENTIFIER, pi(parser));
+        parser.register_prefix(TokenType::IDENTIFIER, parse_identifier);
         // parser.register_prefix(INTEGER, parser.parse_integer_literal);
         // parser.register_prefix(BANG, parser.parse_prefix_expression);
         // parser.register_prefix(MINUS, parser.parse_prefix_expression);
@@ -91,39 +99,30 @@ impl<'a> Parser<'a> {
         parser
     }
 
-    // fn register_prefix<F>(&mut self, token_type: TokenType, func: F)
-    //     where F: Fn(&mut Parser)
-    // {
-    //     func(&mut self);
-    // }
-
     fn register_prefix(&mut self, token_type: TokenType, func: PrefixParseFunc) {
-        self.prefix_parse_funcs[&token_type] = func;
+        self.prefix_parse_funcs.insert(token_type, func);
     }
 
     fn next_token(&mut self) {
-        self.prev_token = self.current_token;
-        self.current_token = self.peek_token;
-        self.peek_token = self.lexer.next_token();
+        self.prev_token = self.current_token.clone();
+        self.current_token = self.peek_token.clone();
+        self.peek_token = self.lexer.clone().next_token();
     }
 }
 
-fn pi(parser: &mut Parser) -> fn(parser: &Parser) -> Box<dyn Expression> {
-    return move |parser: &Parser| -> Box<dyn Expression> {
-        let contains_key = parser.postfix_parse_funcs.contains_key(&parser.peek_token.token_type);
-        
-        if contains_key {
-            let postfix = parser.postfix_parse_funcs[&parser.peek_token.token_type];
+fn parse_identifier(parser: &mut Parser) -> Box<dyn Expression> {
+    let contains_key = parser
+        .postfix_parse_funcs
+        .contains_key(&parser.peek_token.token_type);
 
-            parser.next_token();
-
-            return postfix();
-        }
-        
-        return Box::new(Identifier {
-            token: parser.current_token,
-            value: parser.current_token.literal,
-        });
+    if contains_key {
+        let postfix = parser.postfix_parse_funcs[&parser.peek_token.token_type];
+        parser.next_token();
+        return postfix(parser);
     }
+
+    return Box::new(Identifier {
+        token: parser.current_token.clone(),
+        value: parser.current_token.literal.clone(),
+    });
 }
-    

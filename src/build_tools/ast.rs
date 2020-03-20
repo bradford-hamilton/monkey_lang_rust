@@ -42,17 +42,17 @@ impl RootNode {
 }
 
 pub struct Identifier {
-	token: Token,
-	value: String,
+    pub token: Token,
+    pub value: String,
 }
 
 impl Expression for Identifier {
     fn token_literal(&self) -> String {
-        self.token.literal
+        self.token.literal.clone()
     }
 
     fn string(&self) -> String {
-        self.value
+        self.value.clone()
     }
 
     fn expression_node(&self) {}
