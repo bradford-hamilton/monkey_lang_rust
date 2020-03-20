@@ -1,4 +1,4 @@
-use crate::build_tools::ast::{Expression, Identifier};
+use crate::build_tools::ast::{Expression, Identifier, IntegerLiteral};
 use crate::build_tools::lexer::Lexer;
 use crate::build_tools::token::*;
 
@@ -84,7 +84,7 @@ impl Parser {
         };
 
         parser.register_prefix(TokenType::IDENTIFIER, parse_identifier);
-        // parser.register_prefix(INTEGER, parser.parse_integer_literal);
+        parser.register_prefix(TokenType::INTEGER, parse_integer_literal);
         // parser.register_prefix(BANG, parser.parse_prefix_expression);
         // parser.register_prefix(MINUS, parser.parse_prefix_expression);
         // parser.register_prefix(TRUE, parser.parse_boolean);
@@ -121,8 +121,15 @@ fn parse_identifier(parser: &mut Parser) -> Box<dyn Expression> {
         return postfix(parser);
     }
 
-    return Box::new(Identifier {
+    Box::new(Identifier {
         token: parser.current_token.clone(),
         value: parser.current_token.literal.clone(),
-    });
+    })
+}
+
+fn parse_integer_literal(parser: &mut Parser) -> Box<dyn Expression> {
+    Box::new(IntegerLiteral {
+        token: parser.current_token.clone(),
+        value: parser.current_token.literal.parse::<usize>().unwrap(),
+    })
 }
