@@ -1,24 +1,35 @@
 use crate::build_tools::ast::{
-    Expression, Identifier, IntegerLiteral, PrefixExpression, ZeroValueExpression, Boolean
+    Boolean, Expression, Identifier, IntegerLiteral, PrefixExpression, ZeroValueExpression,
 };
 use crate::build_tools::lexer::Lexer;
 use crate::build_tools::token::*;
 
 use std::collections::HashMap;
 
+/// Operator precedence constants
 static LOWEST: usize = 1;
+/// =
 static EQUALS: usize = 2;
+/// && and ||
 static LOGICAL: usize = 3;
+/// > or <
 static LESS_GREATER: usize = 4;
+/// +
 static SUM: usize = 5;
+/// *
 static PRODUCT: usize = 6;
+/// %
 static MODULO: usize = 7;
+/// -x or !x
 static PREFIX: usize = 8;
+/// myFunction(x)
 static CALL: usize = 9;
+/// array[index], hash[key]
 static INDEX: usize = 10;
 
 struct Precedences;
 
+/// Operator precedence table
 impl Precedences {
     pub fn all() -> HashMap<TokenType, usize> {
         let mut precendences: HashMap<TokenType, usize> = HashMap::new();
@@ -47,6 +58,8 @@ type PrefixParseFunc = fn(parser: &mut Parser) -> Box<dyn Expression>;
 type InfixParseFunc = fn(parser: &mut Parser, expr: Box<dyn Expression>) -> Box<dyn Expression>;
 type PostfixParseFunc = fn(parser: &mut Parser) -> Box<dyn Expression>;
 
+/// Parser holds a Lexer, its errors, the current_token, peek_token (next token), and
+/// prev_token (used for ++ and --), as well as the prefix/infix/postfix functions
 pub struct Parser {
     lexer: Lexer,
     errors: Vec<String>,
@@ -61,6 +74,8 @@ pub struct Parser {
 }
 
 impl Parser {
+    /// New takes a Lexer, creates a Parser with that Lexer, sets the
+    /// current and peek tokens, and returns the Parser.
     pub fn new(lexer: Lexer) -> Parser {
         let mut parser = Parser {
             lexer,
@@ -210,7 +225,7 @@ fn parse_prefix_expression(parser: &mut Parser) -> Box<dyn Expression> {
 }
 
 fn parse_boolean(parser: &mut Parser) -> Box<dyn Expression> {
-    Box::new(Boolean{
+    Box::new(Boolean {
         token: parser.current_token.clone(),
         value: parser.current_token_type_is(TokenType::TRUE),
     })
