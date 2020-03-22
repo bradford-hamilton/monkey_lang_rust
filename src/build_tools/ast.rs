@@ -7,7 +7,7 @@ trait Node {
 }
 
 /// Statement - must provide statement_node, token_literal, and string methods. Statements do not produce values.
-trait Statement {
+pub trait Statement {
     fn token_literal(&self) -> String;
     fn string(&self) -> String;
     fn statement_node(&self);
@@ -46,7 +46,7 @@ impl RootNode {
     }
 }
 
-/// ZeroValueExpression - this is like very poor rust, but I'd like to continue moving forward for now. This
+/// ZeroValueExpression - this is a poor pattern, but I'd like to continue moving forward for now. This
 /// will be useful in a lot of scenarios I'm running into where you cannot initialize a struct with only
 /// some of the fields and so I'm adding this "zero value" expression for when needing to return something
 pub struct ZeroValueExpression {}
@@ -58,6 +58,20 @@ impl Expression for ZeroValueExpression {
         "zero value".to_owned()
     }
     fn expression_node(&self) {}
+}
+
+/// ZeroValueStatement - this is a poor pattern, but I'd like to continue moving forward for now. This
+/// will be useful in a lot of scenarios I'm running into where you cannot initialize a struct with only
+/// some of the fields and so I'm adding this "zero value" expression for when needing to return something
+pub struct ZeroValueStatement {}
+impl Statement for ZeroValueStatement {
+    fn token_literal(&self) -> String {
+        "zero value".to_owned()
+    }
+    fn string(&self) -> String {
+        "zero value".to_owned()
+    }
+    fn statement_node(&self) {}
 }
 
 /// Identifier - holds IDENTIFIER token and it's value (add, foobar, x, y, ...)
@@ -145,6 +159,75 @@ impl Expression for Boolean {
     /// string - returns a string representation of the Boolean and satisfies our Node interface
     fn string(&self) -> String {
         self.token.literal.clone()
+    }
+
+    fn expression_node(&self) {}
+}
+
+/// IfExpression - holds the token, the condition expression and the consequence & alternative
+/// block statements. Structure: if (<condition>) <consequence> else <alternative>
+pub struct IfExpression {
+    pub token:       Token, // The If token
+	pub condition:   Box<dyn Expression>,
+	pub consequence: BlockStatement,
+	pub alternative: BlockStatement,
+}
+
+impl Expression for IfExpression {
+    /// token_literal returns the IfExpression's literal and satisfies the Node interface.
+    fn token_literal(&self) -> String {
+        self.token.literal.clone()
+    }
+
+    /// string - returns a string representation of the IfExpression and satisfies our Node interface
+    fn string(&self) -> String {
+        let mut buf = "if".to_owned();
+        // TODO: match on condition and get it's Expression
+        // buf += self.condition.string();
+        buf += " ";
+        // buf += self.consequence.string();
+        // TODO: something besides nil
+        // if self.alternative != nil {
+        //     buf += " else ";
+        //     buf += self.alternative.string();
+        // }
+        buf
+    }
+
+    fn expression_node(&self) {}
+}
+
+/// BlockStatement - holds the token "{", and a slice of statements
+pub struct BlockStatement {
+    pub token: Token,
+    pub statements: Vec<Box<dyn Statement>>,
+}
+
+impl Statement for BlockStatement {
+    /// token_literal returns the BlockStatement's literal and satisfies the Node interface.
+    fn token_literal(&self) -> String {
+        self.token.literal.clone()
+    }
+
+    /// string - returns a string representation of the BlockStatement and satisfies our Node interface
+    fn string(&self) -> String {
+        // TODO: loop over self.statements and call .string() on each
+        "BlockStatement".to_owned()
+    }
+
+    fn statement_node(&self) {}
+}
+
+impl Expression for BlockStatement {
+    /// token_literal returns the BlockStatement's literal and satisfies the Node interface.
+    fn token_literal(&self) -> String {
+        self.token.literal.clone()
+    }
+
+    /// string - returns a string representation of the BlockStatement and satisfies our Node interface
+    fn string(&self) -> String {
+        // TODO: loop over self.statements and call .string() on each
+        "BlockStatement".to_owned()
     }
 
     fn expression_node(&self) {}

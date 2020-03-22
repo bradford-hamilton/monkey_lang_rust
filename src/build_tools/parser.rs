@@ -1,5 +1,5 @@
 use crate::build_tools::ast::{
-    Boolean, Expression, Identifier, IntegerLiteral, PrefixExpression, ZeroValueExpression,
+    Boolean, Expression, Identifier, IntegerLiteral, PrefixExpression, ZeroValueExpression, IfExpression, BlockStatement, Statement, ZeroValueStatement
 };
 use crate::build_tools::lexer::Lexer;
 use crate::build_tools::token::*;
@@ -107,7 +107,7 @@ impl Parser {
         parser.register_prefix(TokenType::TRUE, parse_boolean);
         parser.register_prefix(TokenType::FALSE, parse_boolean);
         parser.register_prefix(TokenType::LEFT_PAREN, parse_grouped_expression);
-        // parser.register_prefix(IF, parser.parse_if_expression);
+        parser.register_prefix(TokenType::IF, parse_if_expression);
         // parser.register_prefix(FUNCTION, parser.parse_function_literal);
         // parser.register_prefix(STRING, parser.parse_string_literal);
         // parser.register_prefix(LEFT_BRACKET, parser.parse_array_literal);
@@ -152,6 +152,35 @@ impl Parser {
 
         Some(left_expr)
     }
+
+    fn parse_block_statement(&mut self) -> Option<Box<dyn Statement>> {
+        let block = BlockStatement{token: self.current_token, statements: vec![]};
+
+        self.next_token();
+
+        while !self.current_token_type_is(TokenType::RIGHT_BRACE) && !self.current_token_type_is(TokenType::EOF) {
+            let stmt = match self.parse_statement() {
+                Some(stmt) => { block.statements.push(stmt); },
+                _ => { return None; },
+            };
+
+            self.next_token();
+        }
+
+        Some(Box::new(block))
+    }
+
+    fn parse_statement(&self) -> Option<Box<dyn Statement>> {
+        let ret = match self.current_token.token_type {
+            TokenType::LET => parse_let_statement(&mut self),
+            TokenType::CONST => parse_const_statement(&mut self),
+            TokenType::RETURN => parse_return_statement(&mut self),
+            _ => parse_expr_stat(&mut self),
+        };
+
+        Some(ret)
+    }
+
 
     fn peek_token_type_is(&self, token_type: TokenType) -> bool {
         self.peek_token.token_type == token_type
@@ -271,3 +300,48 @@ fn parse_grouped_expression(parser: &mut Parser) -> Box<dyn Expression> {
 
     expr
 }
+
+fn parse_if_expression(parser: &mut Parser) -> Box<dyn Expression> {
+    let expr = IfExpression{
+        token:       parser.current_token,
+        condition:   Box::new(ZeroValueExpression {}),
+        consequence: BlockStatement{token: parser.current_token, statements: vec![]},
+        alternative: BlockStatement{token: parser.current_token, statements: vec![]},
+    };
+
+    if !parser.expect_peek_type(TokenType::LEFT_PAREN) {
+        return Box::new(ZeroValueExpression {});
+    }
+
+    parser.next_token();
+    expr.condition = match parser.parse_expr(LOWEST) {
+        Some(cond) => cond,
+        _ => {
+            let msg = format!(
+                "Line {}: Failed to parse expression {}.",
+                parser.current_token.line, parser.current_token.literal
+            );
+            parser.errors.push(msg);
+            Box::new(ZeroValueExpression {})
+        }
+    };
+
+    if !parser.expect_peek_type(TokenType::RIGHT_PAREN) {
+        return Box::new(ZeroValueExpression {});
+    }
+
+    if !parser.expect_peek_type(TokenType::LEFT_BRACE) {
+        return Box::new(ZeroValueExpression {});
+    }
+
+    // TODO: where I left off
+    expr.consequence = match parser.parse_block_statement() {
+        Some(stmt) => stmt,
+        _ => ZeroValueStatement{},
+    }
+}
+// TODO: where I left off
+fn parse_let_statement(parser: &mut Parser) -> Box<dyn Statement> {}
+fn parse_const_statement(parser: &mut Parser) -> Box<dyn Statement> {}
+fn parse_return_statement(parser: &mut Parser) -> Box<dyn Statement> {}
+fn parse_expr_stat(parser: &mut Parser) -> Box<dyn Statement> {}
