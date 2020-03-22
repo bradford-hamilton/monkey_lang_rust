@@ -106,7 +106,7 @@ impl Parser {
         parser.register_prefix(TokenType::MINUS, parse_prefix_expression);
         parser.register_prefix(TokenType::TRUE, parse_boolean);
         parser.register_prefix(TokenType::FALSE, parse_boolean);
-        // parser.register_prefix(LEFT_PAREN, parser.parse_grouped_expression);
+        parser.register_prefix(TokenType::LEFT_PAREN, parse_grouped_expression);
         // parser.register_prefix(IF, parser.parse_if_expression);
         // parser.register_prefix(FUNCTION, parser.parse_function_literal);
         // parser.register_prefix(STRING, parser.parse_string_literal);
@@ -162,6 +162,25 @@ impl Parser {
             Some(precedence) => return *precedence,
             _ => return LOWEST,
         };
+    }
+
+    fn expect_peek_type(&mut self, token_type: TokenType) -> bool {
+        if self.peek_token_type_is(token_type) {
+            self.next_token();
+            return true;
+        }
+
+        self.peek_error(token_type);
+
+        return false;
+    }
+
+    fn peek_error(&mut self, token_type: TokenType) {
+        let msg = format!(
+            "Line {}: Expected token to be {}, but found, {}",
+            self.current_token.line, token_type, self.peek_token.literal,
+        );
+        self.errors.push(msg);
     }
 
     fn no_prefix_parse_func_error(&mut self, token: Token) {
@@ -229,4 +248,26 @@ fn parse_boolean(parser: &mut Parser) -> Box<dyn Expression> {
         token: parser.current_token.clone(),
         value: parser.current_token_type_is(TokenType::TRUE),
     })
+}
+
+fn parse_grouped_expression(parser: &mut Parser) -> Box<dyn Expression> {
+    parser.next_token();
+
+    let expr = match parser.parse_expr(LOWEST) {
+        Some(expr) => expr,
+        _ => {
+            let msg = format!(
+                "Line {}: Failed to parse expression {}.",
+                parser.current_token.line, parser.current_token.literal
+            );
+            parser.errors.push(msg);
+            Box::new(ZeroValueExpression {})
+        }
+    };
+
+    if !parser.expect_peek_type(TokenType::RIGHT_PAREN) {
+        return Box::new(ZeroValueExpression {});
+    }
+
+    expr
 }
