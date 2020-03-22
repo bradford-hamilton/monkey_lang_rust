@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::fmt;
 
 /// Monkey's token types
 #[derive(Debug, PartialEq, Eq, Hash, Copy, Clone)]
@@ -54,6 +55,54 @@ pub enum TokenType {
     RETURN,
 
     NONE,
+}
+
+impl fmt::Display for TokenType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let printable = match *self {
+            ILLEGAL => "ILLEGAL",
+            EOF => "EOF",
+            IDENTIFIER => "IDENTIFIER",
+            INTEGER => "INTEGER",
+            STRING => "STRING",
+            EQUAL => "EQUAL",
+            PLUS => "PLUS",
+            PLUS_PLUS => "PLUS_PLUS",
+            MINUS => "MINUS",
+            MINUS_MINUS => "MINUS_MINUS",
+            STAR => "STAR",
+            SLASH => "SLASH",
+            MOD => "MOD",
+            BANG => "BANG",
+            EQUAL_EQUAL => "EQUAL_EQUAL",
+            LESS => "LESS",
+            LESS_EQUAL => "LESS_EQUAL",
+            GREATER => "GREATER",
+            GREATER_EQUAL => "GREATER_EQUAL",
+            BANG_EQUAL => "BANG_EQUAL",
+            AND => "AND",
+            OR => "OR",
+            COMMA => "COMMA",
+            COLON => "COLON",
+            SEMICOLON => "SEMICOLON",
+            LEFT_PAREN => "LEFT_PAREN",
+            RIGHT_PAREN => "RIGHT_PAREN",
+            LEFT_BRACE => "LEFT_BRACE",
+            RIGHT_BRACE => "RIGHT_BRACE",
+            LEFT_BRACKET => "LEFT_BRACKET",
+            RIGHT_BRACKET => "RIGHT_BRACKET",
+            FUNCTION => "FUNCTION",
+            LET => "LET",
+            CONST => "CONST",
+            TRUE => "TRUE",
+            FALSE => "FALSE",
+            IF => "IF",
+            ELSE => "ELSE",
+            RETURN => "RETURN",
+            NONE => "NONE",
+        };
+        write!(f, "{}", printable)
+    }
 }
 
 /// Token is a struct representing a Monkey token - holds a type and a literal
