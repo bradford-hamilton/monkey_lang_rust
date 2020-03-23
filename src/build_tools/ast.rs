@@ -232,3 +232,25 @@ impl Expression for BlockStatement {
 
     fn expression_node(&self) {}
 }
+
+/// LetStatement - Name holds the identifier of the binding and Value for the expression that produces the value.
+pub struct LetStatement {
+    pub token: Token,
+    pub name: Identifier,
+    pub value: dyn Expression,
+}
+
+impl Statement for LetStatement {
+    /// token_literal returns the LetStatement's literal and satisfies the Node interface.
+    fn token_literal(&self) -> String {
+        self.token.literal.clone()
+    }
+
+    /// string - returns a string representation of the LetStatement and satisfies our Node interface
+    fn string(&self) -> String {
+        // TODO: actually implement this
+        "LetStatement".to_owned()
+    }
+
+    fn statement_node(&self) {}
+}

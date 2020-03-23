@@ -1,5 +1,6 @@
 use crate::build_tools::ast::{
-    Boolean, Expression, Identifier, IntegerLiteral, PrefixExpression, ZeroValueExpression, IfExpression, BlockStatement, Statement, ZeroValueStatement
+    BlockStatement, Boolean, Expression, Identifier, IfExpression, IntegerLiteral,
+    PrefixExpression, Statement, ZeroValueExpression, ZeroValueStatement, LetStatement
 };
 use crate::build_tools::lexer::Lexer;
 use crate::build_tools::token::*;
@@ -153,21 +154,37 @@ impl Parser {
         Some(left_expr)
     }
 
-    fn parse_block_statement(&mut self) -> Option<Box<dyn Statement>> {
-        let block = BlockStatement{token: self.current_token, statements: vec![]};
+    fn parse_block_statement(&mut self) -> BlockStatement {
+        let block = BlockStatement {
+            token: self.current_token,
+            statements: vec![],
+        };
 
         self.next_token();
 
-        while !self.current_token_type_is(TokenType::RIGHT_BRACE) && !self.current_token_type_is(TokenType::EOF) {
+        while !self.current_token_type_is(TokenType::RIGHT_BRACE)
+            && !self.current_token_type_is(TokenType::EOF)
+        {
             let stmt = match self.parse_statement() {
-                Some(stmt) => { block.statements.push(stmt); },
-                _ => { return None; },
+                Some(stmt) => {
+                    block.statements.push(stmt);
+                }
+                _ => {
+                    return BlockStatement {
+                        token: Token {
+                            line: 0,
+                            literal: "".to_owned(),
+                            token_type: TokenType::NONE,
+                        },
+                        statements: vec![],
+                    }
+                }
             };
 
             self.next_token();
         }
 
-        Some(Box::new(block))
+        block
     }
 
     fn parse_statement(&self) -> Option<Box<dyn Statement>> {
@@ -180,7 +197,6 @@ impl Parser {
 
         Some(ret)
     }
-
 
     fn peek_token_type_is(&self, token_type: TokenType) -> bool {
         self.peek_token.token_type == token_type
@@ -302,11 +318,17 @@ fn parse_grouped_expression(parser: &mut Parser) -> Box<dyn Expression> {
 }
 
 fn parse_if_expression(parser: &mut Parser) -> Box<dyn Expression> {
-    let expr = IfExpression{
-        token:       parser.current_token,
-        condition:   Box::new(ZeroValueExpression {}),
-        consequence: BlockStatement{token: parser.current_token, statements: vec![]},
-        alternative: BlockStatement{token: parser.current_token, statements: vec![]},
+    let expr = IfExpression {
+        token: parser.current_token,
+        condition: Box::new(ZeroValueExpression {}),
+        consequence: BlockStatement {
+            token: parser.current_token,
+            statements: vec![],
+        },
+        alternative: BlockStatement {
+            token: parser.current_token,
+            statements: vec![],
+        },
     };
 
     if !parser.expect_peek_type(TokenType::LEFT_PAREN) {
@@ -334,14 +356,54 @@ fn parse_if_expression(parser: &mut Parser) -> Box<dyn Expression> {
         return Box::new(ZeroValueExpression {});
     }
 
-    // TODO: where I left off
-    expr.consequence = match parser.parse_block_statement() {
-        Some(stmt) => stmt,
-        _ => ZeroValueStatement{},
+    expr.consequence = parser.parse_block_statement();
+
+    if parser.peek_token_type_is(TokenType::ELSE) {
+        parser.next_token();
+
+        if !parser.expect_peek_type(TokenType::LEFT_BRACE) {
+            return Box::new(ZeroValueExpression {});
+        }
+
+        expr.alternative = parser.parse_block_statement();
     }
+
+    Box::new(expr)
 }
-// TODO: where I left off
-fn parse_let_statement(parser: &mut Parser) -> Box<dyn Statement> {}
+
+fn parse_let_statement(parser: &mut Parser) -> Box<dyn Statement> {
+    let stmt = LetStatement{token: parser.current_token};
+
+    if !parser.expect_peek_type(TokenType::IDENTIFIER) {
+        return LetStatement{};
+    }
+
+    stmt.name = Identifier{
+        token: parser.current_token,
+        value: parser.current_token.literal,
+    };
+
+    if !parser.expect_peek_type(TokenType::EQUAL) {
+        return LetStatement{};
+    }
+
+    parser.next_token();
+    stmt.value = parser.parse_expr(LOWEST);
+
+    // TODO: Handle function literal piece here
+    // if fl, ok := stmt.Value.(*ast.FunctionLiteral); ok {
+	// 	fl.Name = stmt.Name.Value
+    // }
+    
+    if parser.peek_token_type_is(TokenType::SEMICOLON) {
+        parser.next_token();
+    }
+
+    Box::new(stmt)
+}
+
 fn parse_const_statement(parser: &mut Parser) -> Box<dyn Statement> {}
+
 fn parse_return_statement(parser: &mut Parser) -> Box<dyn Statement> {}
+
 fn parse_expr_stat(parser: &mut Parser) -> Box<dyn Statement> {}
