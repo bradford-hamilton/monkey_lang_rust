@@ -46,9 +46,7 @@ impl RootNode {
     }
 }
 
-/// ZeroValueExpression - this is a poor pattern, but I'd like to continue moving forward for now. This
-/// will be useful in a lot of scenarios I'm running into where you cannot initialize a struct with only
-/// some of the fields and so I'm adding this "zero value" expression for when needing to return something
+/// ZeroValueExpression - is used for initializations
 pub struct ZeroValueExpression {}
 impl Expression for ZeroValueExpression {
     fn token_literal(&self) -> String {
@@ -60,9 +58,7 @@ impl Expression for ZeroValueExpression {
     fn expression_node(&self) {}
 }
 
-/// ZeroValueStatement - this is a poor pattern, but I'd like to continue moving forward for now. This
-/// will be useful in a lot of scenarios I'm running into where you cannot initialize a struct with only
-/// some of the fields and so I'm adding this "zero value" expression for when needing to return something
+/// ZeroValueStatement is used for initializations
 pub struct ZeroValueStatement {}
 impl Statement for ZeroValueStatement {
     fn token_literal(&self) -> String {
@@ -167,10 +163,10 @@ impl Expression for Boolean {
 /// IfExpression - holds the token, the condition expression and the consequence & alternative
 /// block statements. Structure: if (<condition>) <consequence> else <alternative>
 pub struct IfExpression {
-    pub token:       Token, // The If token
-	pub condition:   Box<dyn Expression>,
-	pub consequence: BlockStatement,
-	pub alternative: BlockStatement,
+    pub token: Token, // The If token
+    pub condition: Box<dyn Expression>,
+    pub consequence: BlockStatement,
+    pub alternative: BlockStatement,
 }
 
 impl Expression for IfExpression {
@@ -237,7 +233,7 @@ impl Expression for BlockStatement {
 pub struct LetStatement {
     pub token: Token,
     pub name: Identifier,
-    pub value: dyn Expression,
+    pub value: Box<dyn Expression>,
 }
 
 impl Statement for LetStatement {
@@ -250,6 +246,72 @@ impl Statement for LetStatement {
     fn string(&self) -> String {
         // TODO: actually implement this
         "LetStatement".to_owned()
+    }
+
+    fn statement_node(&self) {}
+}
+
+/// ConstStatement - Name holds the identifier of the binding and value for the expression that produces the value.
+pub struct ConstStatement {
+    pub token: Token,
+    pub name: Identifier,
+    pub value: Box<dyn Expression>,
+}
+
+impl Statement for ConstStatement {
+    /// token_literal returns the ConstStatement's literal and satisfies the Node interface.
+    fn token_literal(&self) -> String {
+        self.token.literal.clone()
+    }
+
+    /// string - returns a string representation of the ConstStatement and satisfies our Node interface
+    fn string(&self) -> String {
+        // TODO: actually implement this
+        "ConstStatement".to_owned()
+    }
+
+    fn statement_node(&self) {}
+}
+
+/// ReturnStatement - pretty self explanatory, holds RETURN token and return value
+pub struct ReturnStatement {
+    pub token: Token,
+    /// The 'return' token
+    pub return_value: Box<dyn Expression>,
+}
+
+impl Statement for ReturnStatement {
+    /// token_literal returns the ReturnStatement's literal and satisfies the Node interface.
+    fn token_literal(&self) -> String {
+        self.token.literal.clone()
+    }
+
+    /// string - returns a string representation of the ReturnStatement and satisfies our Node interface
+    fn string(&self) -> String {
+        // TODO: actually implement this
+        "ReturnStatement".to_owned()
+    }
+
+    fn statement_node(&self) {}
+}
+
+/// ExpressionStatement - holds the first token of the expression and the expression
+pub struct ExpressionStatement {
+    pub token: Token,
+    /// The first token of the expression
+    pub expression: Box<dyn Expression>,
+}
+
+impl Statement for ExpressionStatement {
+    /// token_literal returns the ExpressionStatement's literal and satisfies the Node interface.
+    fn token_literal(&self) -> String {
+        self.token.literal.clone()
+    }
+
+    /// string - returns a string representation of the ExpressionStatement and satisfies our Node interface
+    fn string(&self) -> String {
+        // TODO: actually implement this
+        "ExpressionStatement".to_owned()
     }
 
     fn statement_node(&self) {}

@@ -1,7 +1,4 @@
-use crate::build_tools::ast::{
-    BlockStatement, Boolean, Expression, Identifier, IfExpression, IntegerLiteral,
-    PrefixExpression, Statement, ZeroValueExpression, ZeroValueStatement, LetStatement
-};
+use crate::build_tools::ast;
 use crate::build_tools::lexer::Lexer;
 use crate::build_tools::token::*;
 
@@ -55,9 +52,10 @@ impl Precedences {
     }
 }
 
-type PrefixParseFunc = fn(parser: &mut Parser) -> Box<dyn Expression>;
-type InfixParseFunc = fn(parser: &mut Parser, expr: Box<dyn Expression>) -> Box<dyn Expression>;
-type PostfixParseFunc = fn(parser: &mut Parser) -> Box<dyn Expression>;
+type PrefixParseFunc = fn(parser: &mut Parser) -> Box<dyn ast::Expression>;
+type InfixParseFunc =
+    fn(parser: &mut Parser, expr: Box<dyn ast::Expression>) -> Box<dyn ast::Expression>;
+type PostfixParseFunc = fn(parser: &mut Parser) -> Box<dyn ast::Expression>;
 
 /// Parser holds a Lexer, its errors, the current_token, peek_token (next token), and
 /// prev_token (used for ++ and --), as well as the prefix/infix/postfix functions
@@ -103,12 +101,12 @@ impl Parser {
 
         parser.register_prefix(TokenType::IDENTIFIER, parse_identifier);
         parser.register_prefix(TokenType::INTEGER, parse_integer_literal);
-        parser.register_prefix(TokenType::BANG, parse_prefix_expression);
-        parser.register_prefix(TokenType::MINUS, parse_prefix_expression);
+        parser.register_prefix(TokenType::BANG, parse_prefix_expr);
+        parser.register_prefix(TokenType::MINUS, parse_prefix_expr);
         parser.register_prefix(TokenType::TRUE, parse_boolean);
         parser.register_prefix(TokenType::FALSE, parse_boolean);
-        parser.register_prefix(TokenType::LEFT_PAREN, parse_grouped_expression);
-        parser.register_prefix(TokenType::IF, parse_if_expression);
+        parser.register_prefix(TokenType::LEFT_PAREN, parse_grouped_expr);
+        parser.register_prefix(TokenType::IF, parse_if_expr);
         // parser.register_prefix(FUNCTION, parser.parse_function_literal);
         // parser.register_prefix(STRING, parser.parse_string_literal);
         // parser.register_prefix(LEFT_BRACKET, parser.parse_array_literal);
@@ -127,7 +125,7 @@ impl Parser {
         self.peek_token = self.lexer.clone().next_token();
     }
 
-    fn parse_expr(&mut self, precedence: usize) -> Option<Box<dyn Expression>> {
+    fn parse_expr(&mut self, precedence: usize) -> Option<Box<dyn ast::Expression>> {
         let prefix = match self.prefix_parse_funcs.get(&self.current_token.token_type) {
             Some(&func) => func,
             _ => {
@@ -154,9 +152,9 @@ impl Parser {
         Some(left_expr)
     }
 
-    fn parse_block_statement(&mut self) -> BlockStatement {
-        let block = BlockStatement {
-            token: self.current_token,
+    fn parse_block_stmt(&mut self) -> ast::BlockStatement {
+        let mut block = ast::BlockStatement {
+            token: self.current_token.clone(),
             statements: vec![],
         };
 
@@ -165,12 +163,12 @@ impl Parser {
         while !self.current_token_type_is(TokenType::RIGHT_BRACE)
             && !self.current_token_type_is(TokenType::EOF)
         {
-            let stmt = match self.parse_statement() {
+            let stmt = match self.parse_stmt() {
                 Some(stmt) => {
                     block.statements.push(stmt);
                 }
                 _ => {
-                    return BlockStatement {
+                    return ast::BlockStatement {
                         token: Token {
                             line: 0,
                             literal: "".to_owned(),
@@ -187,12 +185,12 @@ impl Parser {
         block
     }
 
-    fn parse_statement(&self) -> Option<Box<dyn Statement>> {
+    fn parse_stmt(&mut self) -> Option<Box<dyn ast::Statement>> {
         let ret = match self.current_token.token_type {
-            TokenType::LET => parse_let_statement(&mut self),
-            TokenType::CONST => parse_const_statement(&mut self),
-            TokenType::RETURN => parse_return_statement(&mut self),
-            _ => parse_expr_stat(&mut self),
+            TokenType::LET => parse_let_stmt(self),
+            TokenType::CONST => parse_const_stmt(self),
+            TokenType::RETURN => parse_return_stmt(self),
+            _ => parse_expr_stmt(self),
         };
 
         Some(ret)
@@ -241,7 +239,7 @@ impl Parser {
     }
 }
 
-fn parse_identifier(parser: &mut Parser) -> Box<dyn Expression> {
+fn parse_identifier(parser: &mut Parser) -> Box<dyn ast::Expression> {
     let contains_key = parser
         .postfix_parse_funcs
         .contains_key(&parser.peek_token.token_type);
@@ -252,24 +250,24 @@ fn parse_identifier(parser: &mut Parser) -> Box<dyn Expression> {
         return postfix(parser);
     }
 
-    Box::new(Identifier {
+    Box::new(ast::Identifier {
         token: parser.current_token.clone(),
         value: parser.current_token.literal.clone(),
     })
 }
 
-fn parse_integer_literal(parser: &mut Parser) -> Box<dyn Expression> {
-    Box::new(IntegerLiteral {
+fn parse_integer_literal(parser: &mut Parser) -> Box<dyn ast::Expression> {
+    Box::new(ast::IntegerLiteral {
         token: parser.current_token.clone(),
         value: parser.current_token.literal.parse::<usize>().unwrap(),
     })
 }
 
-fn parse_prefix_expression(parser: &mut Parser) -> Box<dyn Expression> {
-    let mut expr = PrefixExpression {
+fn parse_prefix_expr(parser: &mut Parser) -> Box<dyn ast::Expression> {
+    let mut expr = ast::PrefixExpression {
         token: parser.current_token.clone(),
         operator: parser.current_token.literal.clone(),
-        right: Box::new(ZeroValueExpression {}),
+        right: Box::new(ast::ZeroValueExpression {}),
     };
 
     parser.next_token();
@@ -281,21 +279,21 @@ fn parse_prefix_expression(parser: &mut Parser) -> Box<dyn Expression> {
                 parser.current_token.line, parser.current_token.literal
             );
             parser.errors.push(msg);
-            Box::new(ZeroValueExpression {})
+            Box::new(ast::ZeroValueExpression {})
         }
     };
 
     Box::new(expr)
 }
 
-fn parse_boolean(parser: &mut Parser) -> Box<dyn Expression> {
-    Box::new(Boolean {
+fn parse_boolean(parser: &mut Parser) -> Box<dyn ast::Expression> {
+    Box::new(ast::Boolean {
         token: parser.current_token.clone(),
         value: parser.current_token_type_is(TokenType::TRUE),
     })
 }
 
-fn parse_grouped_expression(parser: &mut Parser) -> Box<dyn Expression> {
+fn parse_grouped_expr(parser: &mut Parser) -> Box<dyn ast::Expression> {
     parser.next_token();
 
     let expr = match parser.parse_expr(LOWEST) {
@@ -306,33 +304,33 @@ fn parse_grouped_expression(parser: &mut Parser) -> Box<dyn Expression> {
                 parser.current_token.line, parser.current_token.literal
             );
             parser.errors.push(msg);
-            Box::new(ZeroValueExpression {})
+            Box::new(ast::ZeroValueExpression {})
         }
     };
 
     if !parser.expect_peek_type(TokenType::RIGHT_PAREN) {
-        return Box::new(ZeroValueExpression {});
+        return Box::new(ast::ZeroValueExpression {});
     }
 
     expr
 }
 
-fn parse_if_expression(parser: &mut Parser) -> Box<dyn Expression> {
-    let expr = IfExpression {
-        token: parser.current_token,
-        condition: Box::new(ZeroValueExpression {}),
-        consequence: BlockStatement {
-            token: parser.current_token,
+fn parse_if_expr(parser: &mut Parser) -> Box<dyn ast::Expression> {
+    let mut expr = ast::IfExpression {
+        token: parser.current_token.clone(),
+        condition: Box::new(ast::ZeroValueExpression {}),
+        consequence: ast::BlockStatement {
+            token: parser.current_token.clone(),
             statements: vec![],
         },
-        alternative: BlockStatement {
-            token: parser.current_token,
+        alternative: ast::BlockStatement {
+            token: parser.current_token.clone(),
             statements: vec![],
         },
     };
 
     if !parser.expect_peek_type(TokenType::LEFT_PAREN) {
-        return Box::new(ZeroValueExpression {});
+        return Box::new(ast::ZeroValueExpression {});
     }
 
     parser.next_token();
@@ -344,57 +342,81 @@ fn parse_if_expression(parser: &mut Parser) -> Box<dyn Expression> {
                 parser.current_token.line, parser.current_token.literal
             );
             parser.errors.push(msg);
-            Box::new(ZeroValueExpression {})
+            Box::new(ast::ZeroValueExpression {})
         }
     };
 
     if !parser.expect_peek_type(TokenType::RIGHT_PAREN) {
-        return Box::new(ZeroValueExpression {});
+        return Box::new(ast::ZeroValueExpression {});
     }
 
     if !parser.expect_peek_type(TokenType::LEFT_BRACE) {
-        return Box::new(ZeroValueExpression {});
+        return Box::new(ast::ZeroValueExpression {});
     }
 
-    expr.consequence = parser.parse_block_statement();
+    expr.consequence = parser.parse_block_stmt();
 
     if parser.peek_token_type_is(TokenType::ELSE) {
         parser.next_token();
 
         if !parser.expect_peek_type(TokenType::LEFT_BRACE) {
-            return Box::new(ZeroValueExpression {});
+            return Box::new(ast::ZeroValueExpression {});
         }
 
-        expr.alternative = parser.parse_block_statement();
+        expr.alternative = parser.parse_block_stmt();
     }
 
     Box::new(expr)
 }
 
-fn parse_let_statement(parser: &mut Parser) -> Box<dyn Statement> {
-    let stmt = LetStatement{token: parser.current_token};
+fn parse_let_stmt(parser: &mut Parser) -> Box<dyn ast::Statement> {
+    let zero_value_token: Token = Token {
+        token_type: TokenType::NONE,
+        literal: "".to_owned(),
+        line: 0,
+    };
+    let zero_value_identifier: ast::Identifier = ast::Identifier {
+        token: zero_value_token,
+        value: "".to_owned(),
+    };
+    let mut stmt = ast::LetStatement {
+        token: parser.current_token.clone(),
+        name: zero_value_identifier,
+        value: Box::new(ast::ZeroValueExpression {}),
+    };
 
     if !parser.expect_peek_type(TokenType::IDENTIFIER) {
-        return LetStatement{};
+        return Box::new(ast::ZeroValueStatement {});
     }
 
-    stmt.name = Identifier{
-        token: parser.current_token,
-        value: parser.current_token.literal,
+    stmt.name = ast::Identifier {
+        token: parser.current_token.clone(),
+        value: parser.current_token.literal.clone(),
     };
 
     if !parser.expect_peek_type(TokenType::EQUAL) {
-        return LetStatement{};
+        return Box::new(ast::ZeroValueStatement {});
     }
 
     parser.next_token();
-    stmt.value = parser.parse_expr(LOWEST);
+
+    stmt.value = match parser.parse_expr(LOWEST) {
+        Some(expr) => expr,
+        _ => {
+            let msg = format!(
+                "Line {}: Failed to parse expression {}.",
+                parser.current_token.line, parser.current_token.literal
+            );
+            parser.errors.push(msg);
+            Box::new(ast::ZeroValueExpression {})
+        }
+    };
 
     // TODO: Handle function literal piece here
     // if fl, ok := stmt.Value.(*ast.FunctionLiteral); ok {
-	// 	fl.Name = stmt.Name.Value
+    // 	fl.Name = stmt.Name.Value
     // }
-    
+
     if parser.peek_token_type_is(TokenType::SEMICOLON) {
         parser.next_token();
     }
@@ -402,8 +424,109 @@ fn parse_let_statement(parser: &mut Parser) -> Box<dyn Statement> {
     Box::new(stmt)
 }
 
-fn parse_const_statement(parser: &mut Parser) -> Box<dyn Statement> {}
+fn parse_const_stmt(parser: &mut Parser) -> Box<dyn ast::Statement> {
+    let zero_value_token: Token = Token {
+        token_type: TokenType::NONE,
+        literal: "".to_owned(),
+        line: 0,
+    };
+    let zero_value_identifier: ast::Identifier = ast::Identifier {
+        token: zero_value_token,
+        value: "".to_owned(),
+    };
+    let mut stmt = ast::ConstStatement {
+        token: parser.current_token.clone(),
+        name: zero_value_identifier,
+        value: Box::new(ast::ZeroValueExpression {}),
+    };
 
-fn parse_return_statement(parser: &mut Parser) -> Box<dyn Statement> {}
+    if !parser.expect_peek_type(TokenType::IDENTIFIER) {
+        return Box::new(ast::ZeroValueStatement {});
+    }
 
-fn parse_expr_stat(parser: &mut Parser) -> Box<dyn Statement> {}
+    stmt.name = ast::Identifier {
+        token: parser.current_token.clone(),
+        value: parser.current_token.literal.clone(),
+    };
+
+    if !parser.expect_peek_type(TokenType::EQUAL) {
+        return Box::new(ast::ZeroValueStatement {});
+    }
+
+    parser.next_token();
+
+    stmt.value = match parser.parse_expr(LOWEST) {
+        Some(expr) => expr,
+        _ => {
+            let msg = format!(
+                "Line {}: Failed to parse expression {}.",
+                parser.current_token.line, parser.current_token.literal
+            );
+            parser.errors.push(msg);
+            Box::new(ast::ZeroValueExpression {})
+        }
+    };
+
+    // TODO: Handle function literal piece here
+    // if fl, ok := stmt.Value.(*ast.FunctionLiteral); ok {
+    // 	fl.Name = stmt.Name.Value
+    // }
+
+    if parser.peek_token_type_is(TokenType::SEMICOLON) {
+        parser.next_token();
+    }
+
+    Box::new(stmt)
+}
+
+fn parse_return_stmt(parser: &mut Parser) -> Box<dyn ast::Statement> {
+    let mut stmt = ast::ReturnStatement {
+        token: parser.current_token.clone(),
+        return_value: Box::new(ast::ZeroValueExpression {}),
+    };
+
+    parser.next_token();
+
+    stmt.return_value = match parser.parse_expr(LOWEST) {
+        Some(expr) => expr,
+        _ => {
+            let msg = format!(
+                "Line {}: Failed to parse expression {}.",
+                parser.current_token.line, parser.current_token.literal,
+            );
+            parser.errors.push(msg);
+            Box::new(ast::ZeroValueExpression {})
+        }
+    };
+
+    if parser.peek_token_type_is(TokenType::SEMICOLON) {
+        parser.next_token();
+    }
+
+    Box::new(stmt)
+}
+
+fn parse_expr_stmt(parser: &mut Parser) -> Box<dyn ast::Statement> {
+    let mut stmt = ast::ExpressionStatement {
+        token: parser.current_token.clone(),
+        expression: Box::new(ast::ZeroValueExpression {}),
+    };
+
+    stmt.expression = match parser.parse_expr(LOWEST) {
+        Some(expr) => expr,
+        _ => {
+            let msg = format!(
+                "Line {}: Failed to parse expression {}.",
+                parser.current_token.line, parser.current_token.literal,
+            );
+            parser.errors.push(msg);
+            Box::new(ast::ZeroValueExpression {})
+        }
+    };
+
+    if parser.peek_token_type_is(TokenType::SEMICOLON) {
+        parser.next_token();
+    }
+
+    Box::new(stmt)
+}
