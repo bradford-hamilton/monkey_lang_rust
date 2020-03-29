@@ -316,3 +316,27 @@ impl Statement for ExpressionStatement {
 
     fn statement_node(&self) {}
 }
+
+// FunctionLiteral - holds the token, the function params (a vec of Identifier), and
+// the function Body (BlockStatement). Structure: func <parameters> <block statement>
+pub struct FunctionLiteral {
+    pub token: Token, // The 'func' token
+    pub parameters: Vec<Identifier>,
+    pub body: BlockStatement,
+    pub name: String
+}
+
+impl Expression for FunctionLiteral {
+    /// token_literal returns the FunctionLiteral's literal and satisfies the Node interface.
+    fn token_literal(&self) -> String {
+        self.token.literal.clone()
+    }
+
+    /// string - returns a string representation of the FunctionLiteral and satisfies our Node interface
+    fn string(&self) -> String {
+        // TODO: actually implement them
+        "FunctionLiteral".to_owned()
+    }
+
+    fn expression_node(&self) {}
+}

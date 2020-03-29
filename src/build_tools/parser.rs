@@ -107,7 +107,7 @@ impl Parser {
         parser.register_prefix(TokenType::FALSE, parse_boolean);
         parser.register_prefix(TokenType::LEFT_PAREN, parse_grouped_expr);
         parser.register_prefix(TokenType::IF, parse_if_expr);
-        // parser.register_prefix(FUNCTION, parser.parse_function_literal);
+        parser.register_prefix(TokenType::FUNCTION, parse_function_literal);
         // parser.register_prefix(STRING, parser.parse_string_literal);
         // parser.register_prefix(LEFT_BRACKET, parser.parse_array_literal);
         // parser.register_prefix(LEFT_BRACE, parser.parse_hash_literal);
@@ -194,6 +194,38 @@ impl Parser {
         };
 
         Some(ret)
+    }
+
+    fn parse_function_params(&mut self) -> Vec<ast::Identifier> {
+        let mut identifiers: Vec<ast::Identifier> = vec![];
+
+        if self.peek_token_type_is(TokenType::RIGHT_PAREN) {
+            self.next_token();
+            return identifiers;
+        }
+
+        self.next_token();
+
+        identifiers.push(ast::Identifier{
+            token: self.current_token.clone(),
+            value: self.current_token.literal.clone(),
+        });
+
+        while self.peek_token_type_is(TokenType::COMMA) {
+            self.next_token();
+            self.next_token();
+
+            identifiers.push(ast::Identifier{
+                token: self.current_token.clone(),
+                value: self.current_token.literal.clone(),
+            })
+        }
+
+        if !self.expect_peek_type(TokenType::RIGHT_PAREN) {
+            return vec![];
+        }
+
+        identifiers
     }
 
     fn peek_token_type_is(&self, token_type: TokenType) -> bool {
@@ -529,4 +561,35 @@ fn parse_expr_stmt(parser: &mut Parser) -> Box<dyn ast::Statement> {
     }
 
     Box::new(stmt)
+}
+
+fn parse_function_literal(parser: &mut Parser) -> Box<dyn ast::Expression> {
+    let zero_value_token: Token = Token {
+        token_type: TokenType::NONE,
+        literal: "".to_owned(),
+        line: 0,
+    };
+    let mut lit = ast::FunctionLiteral{
+        token: parser.current_token.clone(),
+        parameters: vec![],
+        body: ast::BlockStatement{
+            token: zero_value_token,
+            statements: vec![],
+        },
+        name: "".to_owned(),
+    };
+
+    if !parser.expect_peek_type(TokenType::LEFT_PAREN) {
+        return Box::new(ast::ZeroValueExpression {});
+    }
+
+    lit.parameters = parser.parse_function_params();
+
+    if !parser.expect_peek_type(TokenType::LEFT_BRACE) {
+        return Box::new(ast::ZeroValueExpression {});
+    }
+
+    lit.body = parser.parse_block_stmt();
+
+    Box::new(lit)
 }
