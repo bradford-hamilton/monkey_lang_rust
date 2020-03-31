@@ -317,7 +317,7 @@ impl Expression for FunctionLiteral {
     fn expression_node(&self) {}
 }
 
-// StringLiteral holds the token and it's value (string)
+/// StringLiteral holds the token and it's value (string)
 pub struct StringLiteral {
     pub token: Token,
     pub value: String,
@@ -331,6 +331,25 @@ impl Expression for StringLiteral {
     /// string - returns a string representation of the StringLiteral and satisfies our Node interface
     fn string(&self) -> String {
         self.token.literal.clone()
+    }
+    fn expression_node(&self) {}
+}
+
+/// ArrayLiteral holds the token: '[' and an array of expressions (Elements)
+pub struct ArrayLiteral {
+    pub token: Token,/// the '[' token
+    pub elements: Vec<Box<dyn Expression>>,
+}
+
+impl Expression for ArrayLiteral {
+    /// token_literal returns the ArrayLiteral's literal and satisfies the Node interface.
+    fn token_literal(&self) -> String {
+        self.token.literal.clone()
+    }
+    /// string - returns a string representation of the ArrayLiteral and satisfies our Node interface
+    fn string(&self) -> String {
+        // TODO: actually implement them
+        "ArrayLiteral".to_owned()
     }
     fn expression_node(&self) {}
 }

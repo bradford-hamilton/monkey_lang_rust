@@ -109,7 +109,7 @@ impl Parser {
         parser.register_prefix(TokenType::IF, parse_if_expr);
         parser.register_prefix(TokenType::FUNCTION, parse_function_literal);
         parser.register_prefix(TokenType::STRING, parse_string_literal);
-        // parser.register_prefix(LEFT_BRACKET, parser.parse_array_literal);
+        parser.register_prefix(TokenType::LEFT_BRACKET, parse_array_literal);
         // parser.register_prefix(LEFT_BRACE, parser.parse_hash_literal);
 
         parser
@@ -226,6 +226,56 @@ impl Parser {
         }
 
         identifiers
+    }
+
+    fn parse_expr_list(&mut self, end: TokenType) -> Vec<Box<dyn ast::Expression>> {
+        let mut list: Vec<Box<dyn ast::Expression>> = vec![Box::new(ast::ZeroValueExpression{})];
+
+        if self.peek_token_type_is(end) {
+            self.next_token();
+            return list;
+        }
+
+        self.next_token();
+
+        let expr = match self.parse_expr(LOWEST) {
+            Some(expr) => expr,
+            _ => {
+                let msg = format!(
+                    "Line {}: Failed to parse expression {}.",
+                    self.current_token.line, self.current_token.literal
+                );
+                self.errors.push(msg);
+                Box::new(ast::ZeroValueExpression {})
+            }
+        };
+
+        list.push(expr);
+
+        while self.peek_token_type_is(TokenType::COMMA) {
+            self.next_token();
+            self.next_token();
+
+            let expr = match self.parse_expr(LOWEST) {
+                Some(expr) => expr,
+                _ => {
+                    let msg = format!(
+                        "Line {}: Failed to parse expression {}.",
+                        self.current_token.line, self.current_token.literal
+                    );
+                    self.errors.push(msg);
+                    Box::new(ast::ZeroValueExpression {})
+                }
+            };
+
+            list.push(expr);
+        }
+
+        if self.expect_peek_type(end) {
+            return vec![Box::new(ast::ZeroValueExpression {})];
+        }
+
+        list
     }
 
     fn peek_token_type_is(&self, token_type: TokenType) -> bool {
@@ -599,4 +649,15 @@ fn parse_string_literal(parser: &mut Parser) -> Box<dyn ast::Expression> {
         token: parser.current_token.clone(),
         value: parser.current_token.literal.clone(),
     })
+}
+
+fn parse_array_literal(parser: &mut Parser) -> Box<dyn ast::Expression> {
+    let mut array = ast::ArrayLiteral{
+        token: parser.current_token.clone(),
+        elements: vec![],
+    };
+
+    array.elements = parser.parse_expr_list(TokenType::RIGHT_BRACKET);
+
+    Box::new(array)
 }
