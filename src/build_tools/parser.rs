@@ -108,7 +108,7 @@ impl Parser {
         parser.register_prefix(TokenType::LEFT_PAREN, parse_grouped_expr);
         parser.register_prefix(TokenType::IF, parse_if_expr);
         parser.register_prefix(TokenType::FUNCTION, parse_function_literal);
-        // parser.register_prefix(STRING, parser.parse_string_literal);
+        parser.register_prefix(TokenType::STRING, parse_string_literal);
         // parser.register_prefix(LEFT_BRACKET, parser.parse_array_literal);
         // parser.register_prefix(LEFT_BRACE, parser.parse_hash_literal);
 
@@ -592,4 +592,11 @@ fn parse_function_literal(parser: &mut Parser) -> Box<dyn ast::Expression> {
     lit.body = parser.parse_block_stmt();
 
     Box::new(lit)
+}
+
+fn parse_string_literal(parser: &mut Parser) -> Box<dyn ast::Expression> {
+    Box::new(ast::StringLiteral{
+        token: parser.current_token.clone(),
+        value: parser.current_token.literal.clone(),
+    })
 }

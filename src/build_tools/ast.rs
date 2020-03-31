@@ -33,7 +33,6 @@ impl RootNode {
         }
         "".to_owned()
     }
-
     /// string returns a buffer containing the programs Statements as strings.
     fn string(&self) -> String {
         let mut statements_string: String = "".to_owned();
@@ -81,12 +80,10 @@ impl Expression for Identifier {
     fn token_literal(&self) -> String {
         self.token.literal.clone()
     }
-
     /// string - returns a string representation of the Identifier and satisfies our Node interface
     fn string(&self) -> String {
         self.value.clone()
     }
-
     fn expression_node(&self) {}
 }
 
@@ -101,12 +98,10 @@ impl Expression for IntegerLiteral {
     fn token_literal(&self) -> String {
         self.token.literal.clone()
     }
-
     /// string - returns a string representation of the IntegerLiteral and satisfies our Node interface
     fn string(&self) -> String {
         self.token.literal.clone()
     }
-
     fn expression_node(&self) {}
 }
 
@@ -125,7 +120,6 @@ impl Expression for PrefixExpression {
     fn token_literal(&self) -> String {
         self.token.literal.clone()
     }
-
     /// String - returns a string representation of the operator followed by it's expression to the right (-5) and satisfies our Node interface
     fn string(&self) -> String {
         let mut buf = "(".to_owned();
@@ -134,7 +128,6 @@ impl Expression for PrefixExpression {
         buf += ")";
         buf
     }
-
     fn expression_node(&self) {}
 }
 
@@ -151,12 +144,10 @@ impl Expression for Boolean {
     fn token_literal(&self) -> String {
         self.token.literal.clone()
     }
-
     /// string - returns a string representation of the Boolean and satisfies our Node interface
     fn string(&self) -> String {
         self.token.literal.clone()
     }
-
     fn expression_node(&self) {}
 }
 
@@ -174,7 +165,6 @@ impl Expression for IfExpression {
     fn token_literal(&self) -> String {
         self.token.literal.clone()
     }
-
     /// string - returns a string representation of the IfExpression and satisfies our Node interface
     fn string(&self) -> String {
         let mut buf = "if".to_owned();
@@ -204,13 +194,11 @@ impl Statement for BlockStatement {
     fn token_literal(&self) -> String {
         self.token.literal.clone()
     }
-
     /// string - returns a string representation of the BlockStatement and satisfies our Node interface
     fn string(&self) -> String {
         // TODO: loop over self.statements and call .string() on each
         "BlockStatement".to_owned()
     }
-
     fn statement_node(&self) {}
 }
 
@@ -219,13 +207,11 @@ impl Expression for BlockStatement {
     fn token_literal(&self) -> String {
         self.token.literal.clone()
     }
-
     /// string - returns a string representation of the BlockStatement and satisfies our Node interface
     fn string(&self) -> String {
         // TODO: loop over self.statements and call .string() on each
         "BlockStatement".to_owned()
     }
-
     fn expression_node(&self) {}
 }
 
@@ -241,13 +227,11 @@ impl Statement for LetStatement {
     fn token_literal(&self) -> String {
         self.token.literal.clone()
     }
-
     /// string - returns a string representation of the LetStatement and satisfies our Node interface
     fn string(&self) -> String {
         // TODO: actually implement this
         "LetStatement".to_owned()
     }
-
     fn statement_node(&self) {}
 }
 
@@ -263,13 +247,11 @@ impl Statement for ConstStatement {
     fn token_literal(&self) -> String {
         self.token.literal.clone()
     }
-
     /// string - returns a string representation of the ConstStatement and satisfies our Node interface
     fn string(&self) -> String {
         // TODO: actually implement this
         "ConstStatement".to_owned()
     }
-
     fn statement_node(&self) {}
 }
 
@@ -285,13 +267,11 @@ impl Statement for ReturnStatement {
     fn token_literal(&self) -> String {
         self.token.literal.clone()
     }
-
     /// string - returns a string representation of the ReturnStatement and satisfies our Node interface
     fn string(&self) -> String {
         // TODO: actually implement this
         "ReturnStatement".to_owned()
     }
-
     fn statement_node(&self) {}
 }
 
@@ -307,13 +287,11 @@ impl Statement for ExpressionStatement {
     fn token_literal(&self) -> String {
         self.token.literal.clone()
     }
-
     /// string - returns a string representation of the ExpressionStatement and satisfies our Node interface
     fn string(&self) -> String {
         // TODO: actually implement this
         "ExpressionStatement".to_owned()
     }
-
     fn statement_node(&self) {}
 }
 
@@ -331,12 +309,28 @@ impl Expression for FunctionLiteral {
     fn token_literal(&self) -> String {
         self.token.literal.clone()
     }
-
     /// string - returns a string representation of the FunctionLiteral and satisfies our Node interface
     fn string(&self) -> String {
         // TODO: actually implement them
         "FunctionLiteral".to_owned()
     }
+    fn expression_node(&self) {}
+}
 
+// StringLiteral holds the token and it's value (string)
+pub struct StringLiteral {
+    pub token: Token,
+    pub value: String,
+}
+
+impl Expression for StringLiteral {
+    /// token_literal returns the StringLiteral's literal and satisfies the Node interface.
+    fn token_literal(&self) -> String {
+        self.token.literal.clone()
+    }
+    /// string - returns a string representation of the StringLiteral and satisfies our Node interface
+    fn string(&self) -> String {
+        self.token.literal.clone()
+    }
     fn expression_node(&self) {}
 }
