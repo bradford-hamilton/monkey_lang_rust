@@ -1,4 +1,5 @@
 use crate::build_tools::token::*;
+use std::collections::HashMap;
 
 /// Node - nodes in our ast will provide a token_literal and string methods for debugging
 trait Node {
@@ -350,6 +351,25 @@ impl Expression for ArrayLiteral {
     fn string(&self) -> String {
         // TODO: actually implement them
         "ArrayLiteral".to_owned()
+    }
+    fn expression_node(&self) {}
+}
+
+/// HashLiteral holds the '{' token and the pairs in the hash
+pub struct HashLiteral {
+    pub token: Token, /// The '{' token
+    pub pairs: HashMap<Box<dyn Expression>, Box<dyn Expression>>
+}
+
+impl Expression for HashLiteral {
+    /// token_literal returns the HashLiteral's literal and satisfies the Node interface.
+    fn token_literal(&self) -> String {
+        self.token.literal.clone()
+    }
+    /// string - returns a string representation of the HashLiteral and satisfies our Node interface
+    fn string(&self) -> String {
+        // TODO: actually implement them
+        "HashLiteral".to_owned()
     }
     fn expression_node(&self) {}
 }

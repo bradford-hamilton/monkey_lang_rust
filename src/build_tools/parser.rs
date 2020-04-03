@@ -110,7 +110,7 @@ impl Parser {
         parser.register_prefix(TokenType::FUNCTION, parse_function_literal);
         parser.register_prefix(TokenType::STRING, parse_string_literal);
         parser.register_prefix(TokenType::LEFT_BRACKET, parse_array_literal);
-        // parser.register_prefix(LEFT_BRACE, parser.parse_hash_literal);
+        parser.register_prefix(TokenType::LEFT_BRACE, parse_hash_literal);
 
         parser
     }
@@ -660,4 +660,57 @@ fn parse_array_literal(parser: &mut Parser) -> Box<dyn ast::Expression> {
     array.elements = parser.parse_expr_list(TokenType::RIGHT_BRACKET);
 
     Box::new(array)
+}
+
+fn parse_hash_literal(parser: &mut Parser) -> Box<dyn ast::Expression> {
+    let pairs_hash: HashMap<String, Box<dyn ast::Expression>> = HashMap::new();
+    let hash = ast::HashLiteral{
+        token: parser.current_token.clone(),
+        pairs: HashMap::new(),
+    };
+
+    while !parser.peek_token_type_is(TokenType::RIGHT_BRACE) {
+        parser.next_token();
+        let key = match parser.parse_expr(LOWEST) {
+            Some(expr) => expr,
+            _ => {
+                let msg = format!(
+                    "Line {}: Failed to parse expression {}.",
+                    parser.current_token.line, parser.current_token.literal,
+                );
+                parser.errors.push(msg);
+                Box::new(ast::ZeroValueExpression {})
+            }
+        };
+        
+        if !parser.expect_peek_type(TokenType::COLON) {
+            return Box::new(ast::ZeroValueExpression {});
+        }
+
+        parser.next_token();
+
+        let value = match parser.parse_expr(LOWEST) {
+            Some(expr) => expr,
+            _ => {
+                let msg = format!(
+                    "Line {}: Failed to parse expression {}.",
+                    parser.current_token.line, parser.current_token.literal,
+                );
+                parser.errors.push(msg);
+                Box::new(ast::ZeroValueExpression {})
+            }
+        };
+
+        hash.pairs.insert(key, value);
+
+        if !parser.peek_token_type_is(TokenType::RIGHT_BRACE) && !parser.expect_peek_type(TokenType::COMMA) {
+            return Box::new(ast::ZeroValueExpression {});
+        }
+    }
+
+    if !parser.peek_token_type_is(TokenType::RIGHT_BRACE) && !parser.expect_peek_type(TokenType::COMMA) {
+        return Box::new(ast::ZeroValueExpression {});
+    }
+
+    Box::new(hash)
 }
