@@ -358,7 +358,7 @@ impl Expression for ArrayLiteral {
 /// HashLiteral holds the '{' token and the pairs in the hash
 pub struct HashLiteral {
     pub token: Token, /// The '{' token
-    pub pairs: HashMap<Box<dyn Expression>, Box<dyn Expression>>
+    pub pairs: HashMap<String, Box<dyn Expression>>
 }
 
 impl Expression for HashLiteral {
@@ -370,6 +370,28 @@ impl Expression for HashLiteral {
     fn string(&self) -> String {
         // TODO: actually implement them
         "HashLiteral".to_owned()
+    }
+    fn expression_node(&self) {}
+}
+
+/// InfixExpression holds the token, the expression to the left of it, a string version of
+// the operator, and the expression to the right of it
+pub struct InfixExpression {
+    pub token: Token, /// The operator token (+, -, *, etc)
+    pub left: Box<dyn Expression>,
+    pub operator: String,
+    pub right: Box<dyn Expression>,
+}
+
+impl Expression for InfixExpression {
+    /// token_literal returns the InfixExpression's literal and satisfies the Node interface.
+    fn token_literal(&self) -> String {
+        self.token.literal.clone()
+    }
+    /// string - returns a string representation of the InfixExpression and satisfies our Node interface
+    fn string(&self) -> String {
+        // TODO: actually implement them
+        "InfixExpression".to_owned()
     }
     fn expression_node(&self) {}
 }

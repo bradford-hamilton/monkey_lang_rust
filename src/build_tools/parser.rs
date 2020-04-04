@@ -99,6 +99,7 @@ impl Parser {
             postfix_parse_funcs: HashMap::new(),
         };
 
+        // Register all of our prefix parse funcs
         parser.register_prefix(TokenType::IDENTIFIER, parse_identifier);
         parser.register_prefix(TokenType::INTEGER, parse_integer_literal);
         parser.register_prefix(TokenType::BANG, parse_prefix_expr);
@@ -112,11 +113,31 @@ impl Parser {
         parser.register_prefix(TokenType::LEFT_BRACKET, parse_array_literal);
         parser.register_prefix(TokenType::LEFT_BRACE, parse_hash_literal);
 
+        // Register all of our infix parse funcs
+        parser.register_infix(TokenType::PLUS, parse_infix_expr);
+        // p.registerInfix(token.Minus, p.parseInfixExpression)
+        // p.registerInfix(token.Slash, p.parseInfixExpression)
+        // p.registerInfix(token.Star, p.parseInfixExpression)
+        // p.registerInfix(token.Mod, p.parseInfixExpression)
+        // p.registerInfix(token.EqualEqual, p.parseInfixExpression)
+        // p.registerInfix(token.BangEqual, p.parseInfixExpression)
+        // p.registerInfix(token.Less, p.parseInfixExpression)
+        // p.registerInfix(token.Greater, p.parseInfixExpression)
+        // p.registerInfix(token.LessEqual, p.parseInfixExpression)
+        // p.registerInfix(token.GreaterEqual, p.parseInfixExpression)
+        // p.registerInfix(token.LeftParen, p.parseCallExpression)
+        // p.registerInfix(token.LeftBracket, p.parseIndexExpr)
+        // p.registerInfix(token.And, p.parseInfixExpression)
+        // p.registerInfix(token.Or, p.parseInfixExpression)
         parser
     }
 
     fn register_prefix(&mut self, token_type: TokenType, func: PrefixParseFunc) {
         self.prefix_parse_funcs.insert(token_type, func);
+    }
+
+    fn register_infix(&mut self, token_type: TokenType, func: InfixParseFunc) {
+        self.infix_parse_funcs.insert(token_type, func);
     }
 
     fn next_token(&mut self) {
@@ -318,6 +339,13 @@ impl Parser {
 
     fn current_token_type_is(&self, token_type: TokenType) -> bool {
         self.current_token.token_type == token_type
+    }
+
+    fn current_token_precedence(&self) -> usize {
+        match Precedences::all().get(&self.current_token.token_type) {
+            Some(precedence) => *precedence,
+            None => LOWEST,
+        }
     }
 }
 
@@ -663,8 +691,7 @@ fn parse_array_literal(parser: &mut Parser) -> Box<dyn ast::Expression> {
 }
 
 fn parse_hash_literal(parser: &mut Parser) -> Box<dyn ast::Expression> {
-    let pairs_hash: HashMap<String, Box<dyn ast::Expression>> = HashMap::new();
-    let hash = ast::HashLiteral{
+    let mut hash = ast::HashLiteral{
         token: parser.current_token.clone(),
         pairs: HashMap::new(),
     };
@@ -701,7 +728,7 @@ fn parse_hash_literal(parser: &mut Parser) -> Box<dyn ast::Expression> {
             }
         };
 
-        hash.pairs.insert(key, value);
+        hash.pairs.insert(key.string(), value);
 
         if !parser.peek_token_type_is(TokenType::RIGHT_BRACE) && !parser.expect_peek_type(TokenType::COMMA) {
             return Box::new(ast::ZeroValueExpression {});
@@ -713,4 +740,30 @@ fn parse_hash_literal(parser: &mut Parser) -> Box<dyn ast::Expression> {
     }
 
     Box::new(hash)
+}
+
+fn parse_infix_expr(parser: &mut Parser, left: Box<dyn ast::Expression>) -> Box<dyn ast::Expression> {
+    let mut expr = ast::InfixExpression{
+        token: parser.current_token.clone(),
+        operator: parser.current_token.literal.clone(),
+        left,
+        right: Box::new(ast::ZeroValueExpression {}),
+    };
+    let precedence = parser.current_token_precedence();
+
+    parser.next_token();
+
+    expr.right = match parser.parse_expr(precedence) {
+        Some(expr) => expr,
+        _ => {
+            let msg = format!(
+                "Line {}: Failed to parse expression {}.",
+                parser.current_token.line, parser.current_token.literal,
+            );
+            parser.errors.push(msg);
+            Box::new(ast::ZeroValueExpression {})
+        }
+    };
+
+    Box::new(expr)
 }
